@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #faf7f2;
+  --foreground: #2c2c2c;
+}
+
+body {
+  @apply bg-ivory text-charcoal font-sans antialiased;
+}
+
+h1,
+h2,
+h3 {
+  @apply font-display;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center rounded-sm bg-champagne px-6 py-3 text-sm font-medium uppercase tracking-widest text-ivory transition hover:bg-champagne-dark;
+}
+
+.btn-outline {
+  @apply inline-flex items-center justify-center rounded-sm border border-charcoal/20 px-6 py-3 text-sm font-medium uppercase tracking-widest text-charcoal transition hover:border-champagne hover:text-champagne-dark;
+}
+
+.input-field {
+  @apply w-full rounded-sm border border-charcoal/15 bg-cream/50 px-4 py-3 text-charcoal outline-none focus:border-champagne;
+}
+
+.prose-store {
+  @apply max-w-none text-charcoal-muted leading-relaxed;
+}

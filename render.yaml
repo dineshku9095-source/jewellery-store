@@ -1,0 +1,57 @@
+services:
+  - type: web
+    name: jewellery-api
+    runtime: node
+    plan: starter
+    rootDir: backend
+    buildCommand: npm install && npm run build -w @jewellery/shared && npm run build
+    startCommand: npm run start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: jewellery-db
+          property: connectionString
+      - key: ADMIN_BOOTSTRAP_EMAIL
+        sync: false
+      - key: ADMIN_BOOTSTRAP_PASSWORD
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: COOKIE_SAME_SITE
+        value: lax
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  - type: web
+    name: jewellery-web
+    runtime: node
+    plan: starter
+    rootDir: frontend
+    buildCommand: npm install && npm run build -w @jewellery/shared && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: BACKEND_URL
+        sync: false
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
+
+databases:
+  - name: jewellery-db
+    plan: starter
+    databaseName: jewellery
+    user: jewellery
