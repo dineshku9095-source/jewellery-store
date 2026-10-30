@@ -34,3 +34,10 @@ Home, shop, categories, collections, PDP, cart, checkout, order success, about, 
 ## Admin routes
 
 Login, dashboard, products, categories, collections, banners, orders (+ detail), settings, profile, audit.
+
+## Live GitHub (JE-2)
+
+- Repo: https://github.com/dineshkumar27471/Jewellery-Store-monorepo-
+- Commit: `bdb37c5c5dc931ba3ff54a3cf634c52f546845fc`
+- Render: pending (no RENDER_API_KEY)
+

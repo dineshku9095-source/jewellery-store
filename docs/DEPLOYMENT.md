@@ -1,26 +1,103 @@
-# Deployment
+# Deployment guide
 
-See root `render.yaml` for Blueprint services: `jewellery-api`, `jewellery-web`, Postgres `jewellery-db`.
+Last updated: 2026-10-26 (JE-2)
+
+## Live URLs
+
+| Resource | URL |
+|----------|-----|
+| GitHub repo | **Not created** — agent lacked `gh` auth / `GH_TOKEN` |
+| Render API (`jewellery-api`) | **Not deployed** — no `RENDER_API_KEY` / Render CLI |
+| Render Web (`jewellery-web`) | **Not deployed** |
+| Admin login (once live) | `https://<jewellery-web>/admin/login` |
+
+See Project store `internal/je2-deploy-report.md` and `internal/deploy-secrets-note.md` for generated bootstrap secrets and click-by-click steps.
+
+## Prerequisites
+
+- PostgreSQL (Render Postgres or managed equivalent)
+- Cloudinary account (unsigned uploads disabled; use signed API)
+- Node 20+
+- Strong `ADMIN_BOOTSTRAP_PASSWORD` (never commit)
+- GitHub auth to create/push the repo
+- Render account (Blueprint or API key)
 
 ## Local
 
 ```bash
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env.local
+# Edit DATABASE_URL, ADMIN_BOOTSTRAP_*, CLOUDINARY_*, WhatsApp later in settings
+
 npm install
 npm run build -w @jewellery/shared
-npm run db:generate && npm run db:migrate:dev && npm run db:seed
-npm run dev:backend
-npm run dev:frontend
+npm run db:generate
+npm run db:migrate:dev   # or: npm run db:migrate
+npm run db:seed
+
+npm run dev:backend      # :4000
+npm run dev:frontend     # :3000  (rewrites /api → backend)
 ```
 
-## Production checklist
+Admin: `/admin/login` with bootstrap credentials.
 
-1. Set `DATABASE_URL`, `ADMIN_BOOTSTRAP_*`, session secret
-2. Set `FRONTEND_URL`, `CORS_ORIGINS`, `BACKEND_URL`, `NEXT_PUBLIC_SITE_URL`
-3. Run migrations on deploy (`prisma migrate deploy`)
-4. Seed once: `cd backend && npx tsx prisma/seed.ts`
-5. Configure Cloudinary for admin uploads
-6. Set WhatsApp number in admin Settings
+## Manual GitHub push (required once)
 
-Do not commit `.env` files.
+From a machine/session where `gh auth status` is OK (or with `GH_TOKEN`):
+
+```bash
+cd /agent   # or your clone of this monorepo on branch main
+gh repo create jewellery-store --private --source=. --remote=origin --push
+```
+
+Or create an empty repo on GitHub.com named `jewellery-store`, then:
+
+```bash
+git remote add origin https://github.com/<YOU>/jewellery-store.git
+git push -u origin main
+```
+
+Do **not** commit or push `.env` / `.env.local`.
+
+## Manual Render Blueprint (required once)
+
+1. [dashboard.render.com](https://dashboard.render.com) → **New** → **Blueprint**.
+2. Connect the `jewellery-store` GitHub repo (`render.yaml` at repo root).
+3. Fill secret env vars (use Project store `internal/deploy-secrets-note.md` for bootstrap password):
+   - API: `ADMIN_BOOTSTRAP_*`, `APP_URL`, `FRONTEND_URL`, `CORS_ORIGINS`
+   - Web: `BACKEND_URL`, `NEXT_PUBLIC_SITE_URL`
+   - Cloudinary: placeholders until you have real keys
+4. Deploy. API start runs `prisma migrate deploy`.
+5. **Second pass:** copy the two `*.onrender.com` URLs into the env vars above → Manual Deploy both services.
+6. Seed once — Render Shell on `jewellery-api`:
+
+   ```bash
+   cd backend && npx tsx prisma/seed.ts
+   ```
+
+7. Open `/admin/login`, change password, set WhatsApp number in Settings.
+8. Confirm `GET /health` → `db: ok` (Cloudinary will stay `missing` until keys are set).
+
+### Cookie / CORS notes
+
+- Frontend proxies `/api` via Next rewrites → browser stays same-origin; `COOKIE_SAME_SITE=lax` + `COOKIE_SECURE=true` is correct on HTTPS.
+- If the browser calls the API host directly, set `CORS_ORIGINS` to the frontend origin, `credentials: true` (already), and `COOKIE_SAME_SITE=none` with Secure.
+
+### Images
+
+Never configure local disk uploads. Use admin signed Cloudinary flow (`/api/admin/uploads/sign`). Real `CLOUDINARY_*` keys are required for new uploads; seed/Unsplash URLs work without Cloudinary.
+
+## Environment checklist
+
+| Variable | Service | Required |
+|----------|---------|----------|
+| `DATABASE_URL` | API | Yes (from Render Postgres) |
+| `ADMIN_BOOTSTRAP_EMAIL/PASSWORD` | API | Yes (first boot / seed) |
+| `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` | API | Yes for uploads |
+| `FRONTEND_URL` / `CORS_ORIGINS` | API | Yes |
+| `BACKEND_URL` | Web | Yes |
+| `NEXT_PUBLIC_SITE_URL` | Web | Recommended |
+
+## Unblocking automation
+
+Provide `GH_TOKEN` (repo scope) and `RENDER_API_KEY` to a follow-up agent run, or push the repo yourself and ask the agent only to finish Render URL wiring once services exist.
