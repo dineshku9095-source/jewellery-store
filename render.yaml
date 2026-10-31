@@ -57,3 +57,7 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
+      # Optional: direct browser→API URL (same as BACKEND_URL). Helps when
+      # same-origin rewrite 502s during Render free cold starts.
+      - key: NEXT_PUBLIC_API_URL
+        sync: false

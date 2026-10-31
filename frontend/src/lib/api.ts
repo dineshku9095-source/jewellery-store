@@ -1,18 +1,60 @@
 function getApiBase(): string {
-  if (typeof window !== "undefined") return "";
+  if (typeof window !== "undefined") {
+    // Prefer same-origin rewrite; optional direct API for cold-start resilience
+    return process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
+  }
   return process.env.BACKEND_URL ?? "http://localhost:4000";
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableStatus(status: number) {
+  return status === 502 || status === 503 || status === 504 || status === 520;
+}
+
+/** Render free APIs sleep; rewrites 502 until the dyno wakes (~30–60s). */
+async function fetchWithRetry(
+  url: string,
+  init: RequestInit | undefined,
+  opts?: { retries?: number; baseDelayMs?: number }
+): Promise<Response> {
+  const retries = opts?.retries ?? 5;
+  const baseDelayMs = opts?.baseDelayMs ?? 2500;
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(url, init);
+      if (res.ok || !isRetryableStatus(res.status) || attempt === retries) {
+        return res;
+      }
+    } catch (err) {
+      lastError = err;
+      if (attempt === retries) throw err;
+    }
+    await sleep(baseDelayMs * Math.pow(1.6, attempt));
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Request failed");
+}
+
+async function readError(res: Response): Promise<string> {
+  const body = await res.json().catch(() => ({} as { error?: string }));
+  return body.error ?? `Request failed: ${res.status}`;
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
   const base = getApiBase();
   const url = path.startsWith("/") ? `${base}${path}` : path;
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     credentials: "include",
-    next: { revalidate: 60 },
+    // Avoid Next Data Cache holding a cold-start 502
+    cache: "no-store",
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? `Request failed: ${res.status}`);
+    throw new Error(await readError(res));
   }
   return res.json();
 }
@@ -20,15 +62,18 @@ export async function apiGet<T>(path: string): Promise<T> {
 export async function apiPost<T>(path: string, body: unknown, headers?: HeadersInit): Promise<T> {
   const base = getApiBase();
   const url = path.startsWith("/") ? `${base}${path}` : path;
-  const res = await fetch(url, {
-    method: "POST",
-    credentials: "include",
-    headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(body),
-  });
+  const res = await fetchWithRetry(
+    url,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify(body),
+    },
+    { retries: 2, baseDelayMs: 1500 }
+  );
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error ?? `Request failed: ${res.status}`);
+    throw new Error(await readError(res));
   }
   return res.json();
 }
@@ -47,8 +92,7 @@ export async function apiPatch<T>(
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error ?? `Request failed: ${res.status}`);
+    throw new Error(await readError(res));
   }
   return res.json();
 }
@@ -63,8 +107,7 @@ export async function apiPut<T>(path: string, body: unknown, headers?: HeadersIn
     body: JSON.stringify(body),
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error ?? `Request failed: ${res.status}`);
+    throw new Error(await readError(res));
   }
   return res.json();
 }
@@ -78,8 +121,7 @@ export async function apiDelete<T>(path: string, headers?: HeadersInit): Promise
     headers: { ...headers },
   });
   if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    throw new Error(data.error ?? `Request failed: ${res.status}`);
+    throw new Error(await readError(res));
   }
   return res.json();
 }
@@ -87,6 +129,17 @@ export async function apiDelete<T>(path: string, headers?: HeadersInit): Promise
 export async function fetchAdminCsrf(): Promise<string> {
   const data = await apiGet<{ csrfToken: string }>("/api/admin/csrf");
   return data.csrfToken;
+}
+
+/** Soft public settings fetch for chrome — never throws. */
+export async function fetchPublicSettingsSoft(): Promise<{
+  settings?: Record<string, unknown>;
+} | null> {
+  try {
+    return await apiGet("/api/settings/public");
+  } catch {
+    return null;
+  }
 }
 
 export interface PublicProduct {

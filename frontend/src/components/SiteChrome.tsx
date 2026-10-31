@@ -34,32 +34,32 @@ function useChromeCopy(): ChromeCopy {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/settings/public", { credentials: "include" })
-      .then((r) => r.json())
-      .then(
-        (data: {
+    (async () => {
+      try {
+        // Soft retries — Render free API cold starts often 502 the rewrite for ~30–60s
+        const { apiGet } = await import("@/lib/api");
+        const data = await apiGet<{
           settings?: {
             storeName?: string;
             contactEmail?: string | null;
             homepage?: HomepageContent;
             headerNav?: HeaderNav;
           };
-        }) => {
-          if (cancelled || !data.settings) return;
-          const home = data.settings.homepage ?? DEFAULT_HOMEPAGE_CONTENT;
-          setCopy({
-            storeName: data.settings.storeName || DEFAULT_CHROME.storeName,
-            contactEmail:
-              home.topBarEmail || data.settings.contactEmail || DEFAULT_CHROME.contactEmail,
-            topBarPromo: home.topBarPromo || DEFAULT_CHROME.topBarPromo,
-            footerBlurb: home.footerBlurb || DEFAULT_CHROME.footerBlurb,
-            headerNav: data.settings.headerNav ?? DEFAULT_HEADER_NAV,
-          });
-        }
-      )
-      .catch(() => {
-        /* keep defaults */
-      });
+        }>("/api/settings/public");
+        if (cancelled || !data.settings) return;
+        const home = data.settings.homepage ?? DEFAULT_HOMEPAGE_CONTENT;
+        setCopy({
+          storeName: data.settings.storeName || DEFAULT_CHROME.storeName,
+          contactEmail:
+            home.topBarEmail || data.settings.contactEmail || DEFAULT_CHROME.contactEmail,
+          topBarPromo: home.topBarPromo || DEFAULT_CHROME.topBarPromo,
+          footerBlurb: home.footerBlurb || DEFAULT_CHROME.footerBlurb,
+          headerNav: data.settings.headerNav ?? DEFAULT_HEADER_NAV,
+        });
+      } catch {
+        /* keep defaults while API sleeps */
+      }
+    })();
     return () => {
       cancelled = true;
     };
