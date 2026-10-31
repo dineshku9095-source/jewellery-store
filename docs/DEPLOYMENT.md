@@ -6,7 +6,7 @@ Last updated: 2026-10-26 (JE-2)
 
 | Resource | URL |
 |----------|-----|
-| GitHub repo | **Not created** — agent lacked `gh` auth / `GH_TOKEN` |
+| GitHub repo | https://github.com/dineshku9095-source/jewellery-store — agent lacked `gh` auth / `GH_TOKEN` |
 | Render API (`jewellery-api`) | **Not deployed** — no `RENDER_API_KEY` / Render CLI |
 | Render Web (`jewellery-web`) | **Not deployed** |
 | Admin login (once live) | `https://<jewellery-web>/admin/login` |
