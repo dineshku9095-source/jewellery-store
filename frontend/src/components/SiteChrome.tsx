@@ -138,11 +138,11 @@ function MobileNavPanel({
     <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true" aria-labelledby={panelId}>
       <button
         type="button"
-        className="absolute inset-0 bg-forest/40"
+        className="absolute inset-0 z-0 bg-forest/40"
         aria-label="Close menu"
         onClick={onClose}
       />
-      <div className="absolute inset-x-0 top-0 max-h-[min(100dvh,100%)] overflow-y-auto border-b border-line bg-cream shadow-lg">
+      <div className="relative z-10 max-h-[min(100dvh,100%)] overflow-y-auto border-b border-line bg-cream shadow-lg">
         <div className="flex items-center justify-between border-b border-line px-4 py-3">
           <p id={panelId} className="text-xs font-semibold uppercase tracking-[0.2em] text-forest">
             Menu
