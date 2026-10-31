@@ -123,15 +123,17 @@ model Banner {
 }
 
 model StoreSettings {
-  id             Int      @id @default(1)
-  storeName      String
-  tagline        String?
-  contactEmail   String?
-  contactPhone   String?
-  whatsappNumber String
-  address        String?
-  currency       String   @default("INR")
-  updatedAt      DateTime @updatedAt
+  id               Int      @id @default(1)
+  storeName        String
+  tagline          String?
+  contactEmail     String?
+  contactPhone     String?
+  whatsappNumber   String
+  address          String?
+  currency         String   @default("INR")
+  /// Editable storefront landing copy (JSON). Merged with defaults in app code.
+  homepageContent  Json?
+  updatedAt        DateTime @updatedAt
 }
 
 enum OrderStatus {

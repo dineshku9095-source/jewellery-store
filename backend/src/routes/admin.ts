@@ -6,6 +6,9 @@ import {
   categoryInputSchema,
   changePasswordSchema,
   collectionInputSchema,
+  DEFAULT_HOMEPAGE_CONTENT,
+  homepageContentSchema,
+  mergeHomepageContent,
   orderStatusUpdateSchema,
   productInputSchema,
   storeSettingsSchema,
@@ -505,6 +508,35 @@ adminRouter.put("/settings", requireAdmin, async (req: AuthedRequest, res, next)
       create: { id: 1, ...parsed },
     });
     res.json({ settings });
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.get("/homepage", requireAdmin, async (_req, res, next) => {
+  try {
+    const settings = await prisma.storeSettings.findUnique({ where: { id: 1 } });
+    res.json({
+      homepage: mergeHomepageContent(settings?.homepageContent ?? DEFAULT_HOMEPAGE_CONTENT),
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.put("/homepage", requireAdmin, async (req: AuthedRequest, res, next) => {
+  try {
+    const parsed = homepageContentSchema.parse(req.body);
+    const existing = await prisma.storeSettings.findUnique({ where: { id: 1 } });
+    if (!existing) {
+      res.status(400).json({ error: "Save store settings first (WhatsApp number required)." });
+      return;
+    }
+    const settings = await prisma.storeSettings.update({
+      where: { id: 1 },
+      data: { homepageContent: parsed },
+    });
+    res.json({ homepage: mergeHomepageContent(settings.homepageContent) });
   } catch (e) {
     next(e);
   }

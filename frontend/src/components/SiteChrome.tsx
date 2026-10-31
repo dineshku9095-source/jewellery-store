@@ -2,12 +2,60 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
+import { DEFAULT_HOMEPAGE_CONTENT, type HomepageContent } from "@jewellery/shared";
+
+type ChromeCopy = {
+  storeName: string;
+  contactEmail: string;
+  topBarPromo: string;
+  footerBlurb: string;
+};
+
+const DEFAULT_CHROME: ChromeCopy = {
+  storeName: "Queen's Jewels Aura",
+  contactEmail: DEFAULT_HOMEPAGE_CONTENT.topBarEmail || "hello@queensjewelsaura.example",
+  topBarPromo: DEFAULT_HOMEPAGE_CONTENT.topBarPromo,
+  footerBlurb: DEFAULT_HOMEPAGE_CONTENT.footerBlurb,
+};
+
+function useChromeCopy(): ChromeCopy {
+  const [copy, setCopy] = useState<ChromeCopy>(DEFAULT_CHROME);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/settings/public", { credentials: "include" })
+      .then((r) => r.json())
+      .then((data: { settings?: { storeName?: string; contactEmail?: string | null; homepage?: HomepageContent } }) => {
+        if (cancelled || !data.settings) return;
+        const home = data.settings.homepage ?? DEFAULT_HOMEPAGE_CONTENT;
+        setCopy({
+          storeName: data.settings.storeName || DEFAULT_CHROME.storeName,
+          contactEmail:
+            home.topBarEmail ||
+            data.settings.contactEmail ||
+            DEFAULT_CHROME.contactEmail,
+          topBarPromo: home.topBarPromo || DEFAULT_CHROME.topBarPromo,
+          footerBlurb: home.footerBlurb || DEFAULT_CHROME.footerBlurb,
+        });
+      })
+      .catch(() => {
+        /* keep defaults */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return copy;
+}
 
 export function SiteHeader() {
   const { count } = useCart();
   const pathname = usePathname();
+  const copy = useChromeCopy();
   if (pathname?.startsWith("/admin")) return null;
 
   return (
@@ -15,14 +63,12 @@ export function SiteHeader() {
       <div className="bg-forest text-[11px] text-cream">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2">
           <a
-            href="mailto:hello@queensjewelsaura.example"
+            href={`mailto:${copy.contactEmail}`}
             className="hidden text-gold-soft/90 hover:text-gold-soft sm:inline"
           >
-            hello@queensjewelsaura.example
+            {copy.contactEmail}
           </a>
-          <p className="flex-1 text-center tracking-wide text-cream/95">
-            New Summer Sale 50% Off · Premium antitarnish pieces
-          </p>
+          <p className="flex-1 text-center tracking-wide text-cream/95">{copy.topBarPromo}</p>
           <div className="hidden items-center gap-4 text-gold-soft/90 sm:flex">
             <Link href="/checkout" className="hover:text-gold-soft">
               Checkout
@@ -42,7 +88,7 @@ export function SiteHeader() {
           <Link href="/" className="flex items-center gap-3">
             <Image
               src="/brand/qj-logo.jpg"
-              alt="Queen's Jewels Aura logo"
+              alt={`${copy.storeName} logo`}
               width={52}
               height={52}
               className="h-12 w-12 rounded-full object-cover shadow-sm ring-1 ring-gold/40"
@@ -139,6 +185,7 @@ function BagIcon() {
 
 export function SiteFooter() {
   const pathname = usePathname();
+  const copy = useChromeCopy();
   if (pathname?.startsWith("/admin")) return null;
 
   return (
@@ -158,10 +205,7 @@ export function SiteFooter() {
               <p className="font-script text-xl text-gold">Aura</p>
             </div>
           </div>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-cream/75">
-            Premium quality, antitarnish, and gold-covering pieces — plus antique collections.
-            Browse as a guest and complete checkout over WhatsApp.
-          </p>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-cream/75">{copy.footerBlurb}</p>
         </div>
         <div className="text-sm text-cream/75">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">Explore</p>
@@ -215,7 +259,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-gold/20 py-4 text-center text-[11px] uppercase tracking-wider text-cream/60">
-        © {new Date().getFullYear()} Queen&apos;s Jewels Aura
+        © {new Date().getFullYear()} {copy.storeName}
       </div>
     </footer>
   );

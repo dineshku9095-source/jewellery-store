@@ -12,8 +12,13 @@
 | Products | ✓ | ✓ (+ **file upload**) | ✓ | ✓ (blocked if order items) | isPublished toggle |
 | Product images | ✓ | ✓ file picker → Cloudinary | — | ✓ DB + Cloudinary destroy | — |
 | Banners | ✓ | ✓ | ✓ | ✓ | isActive toggle |
+| Homepage | ✓ | — | ✓ landing copy | — | — |
 | Orders | ✓ | — | status | — | status pipeline |
 | Settings | ✓ | — | ✓ | — | — |
+
+### Homepage copy
+
+Open **Admin → Homepage**. Edit top-bar promo, hero, trust strip, promo cards, trending titles, offer banner, and footer blurb, then **Save homepage copy**. The storefront reads `/api/settings/public` (merged with defaults). Store Settings still holds store name / WhatsApp; Banners remain a separate image carousel table if used elsewhere.
 
 Audit log UI/API removed for Neon free tier — see [NEON_FREE_TIER.md](./NEON_FREE_TIER.md).
 

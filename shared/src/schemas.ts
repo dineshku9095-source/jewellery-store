@@ -93,3 +93,5 @@ export type CategoryInput = z.infer<typeof categoryInputSchema>;
 export type CollectionInput = z.infer<typeof collectionInputSchema>;
 export type BannerInput = z.infer<typeof bannerInputSchema>;
 export type StoreSettingsInput = z.infer<typeof storeSettingsSchema>;
+
+export { homepageContentSchema } from "./homepage";

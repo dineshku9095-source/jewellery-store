@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { DEFAULT_HOMEPAGE_CONTENT, mergeHomepageContent } from "@jewellery/shared";
 import { processCheckout } from "../services/checkoutService";
 import { checkoutLimiter } from "../middleware/rateLimit";
 import { prisma } from "../lib/prisma";
@@ -150,13 +151,14 @@ publicRouter.get("/settings/public", async (_req, res, next) => {
     if (!settings) {
       res.json({
         settings: {
-          storeName: "Jewellery Store",
+          storeName: "Queen's Jewels Aura",
           tagline: "",
           contactEmail: "",
           contactPhone: "",
           whatsappNumber: "",
           address: "",
           currency: "INR",
+          homepage: DEFAULT_HOMEPAGE_CONTENT,
         },
       });
       return;
@@ -170,6 +172,7 @@ publicRouter.get("/settings/public", async (_req, res, next) => {
         whatsappNumber: settings.whatsappNumber,
         address: settings.address,
         currency: settings.currency,
+        homepage: mergeHomepageContent(settings.homepageContent),
       },
     });
   } catch (e) {
