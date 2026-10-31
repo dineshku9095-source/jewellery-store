@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ProductCard } from "@/components/ProductCard";
 import { TrendingTabs } from "@/components/TrendingTabs";
 import { apiGet, type PublicProduct } from "@/lib/api";
 
@@ -8,6 +7,7 @@ export const dynamic = "force-dynamic";
 
 const HERO_IMG =
   "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=1200&q=80";
+
 const PROMO = [
   {
     title: "Silver Pendant Collection",
@@ -22,7 +22,7 @@ const PROMO = [
     href: "/collections",
     image:
       "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=800&q=80",
-    tone: "bg-white",
+    tone: "bg-[#faf6f4]",
   },
   {
     title: "Top Rings Collection",
@@ -39,16 +39,9 @@ const BANNER_IMG =
 
 export default async function HomePage() {
   let products: PublicProduct[] = [];
-  let heroImage = HERO_IMG;
   try {
-    const [{ products: list }, { banners }] = await Promise.all([
-      apiGet<{ products: PublicProduct[] }>("/api/products"),
-      apiGet<{
-        banners: Array<{ title: string; imageUrl: string }>;
-      }>("/api/banners"),
-    ]);
+    const { products: list } = await apiGet<{ products: PublicProduct[] }>("/api/products");
     products = list;
-    if (banners[0]?.imageUrl) heroImage = banners[0].imageUrl;
   } catch {
     products = [];
   }
@@ -56,14 +49,14 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero — Elements-style split */}
-      <section className="bg-white">
+      <section className="animate-fade-up bg-white">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:py-16 lg:gap-12">
           <div className="relative aspect-[5/4] overflow-hidden bg-soft md:aspect-[6/5]">
             <Image
-              src={heroImage}
-              alt="Classic jewellery collection"
+              src={HERO_IMG}
+              alt="Classic jewellery collection — diamond rings"
               fill
-              className="object-cover"
+              className="object-cover transition duration-700 hover:scale-[1.02]"
               priority
               sizes="(max-width:768px) 100vw, 50vw"
             />
@@ -72,7 +65,7 @@ export default async function HomePage() {
             <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-muted">
               Every Piece Of Jewellery Tells A Story
             </p>
-            <h1 className="mt-4 font-script text-5xl leading-tight text-ink md:text-6xl lg:text-7xl">
+            <h1 className="mt-4 font-script text-5xl leading-tight text-ink md:text-6xl lg:text-[4.5rem]">
               Classic Jewellery Collection
             </h1>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-muted">
@@ -87,16 +80,22 @@ export default async function HomePage() {
       </section>
 
       {/* Promo grid */}
-      <section className="border-y border-line bg-white">
+      <section className="animate-fade-up border-y border-line bg-white [animation-delay:120ms]">
         <div className="mx-auto grid max-w-7xl md:grid-cols-3">
           {PROMO.map((item) => (
             <div
               key={item.title}
-              className={`relative flex min-h-[280px] flex-col justify-end overflow-hidden p-8 ${item.tone}`}
+              className={`group relative flex min-h-[320px] flex-col justify-end overflow-hidden p-8 ${item.tone}`}
             >
-              <div className="absolute inset-0 opacity-90">
-                <Image src={item.image} alt="" fill className="object-cover" sizes="33vw" />
-                <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/40 to-transparent" />
+              <div className="absolute inset-0">
+                <Image
+                  src={item.image}
+                  alt=""
+                  fill
+                  className="object-cover transition duration-700 group-hover:scale-[1.04]"
+                  sizes="33vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-white/55 to-transparent" />
               </div>
               <div className="relative z-10">
                 {item.subtitle ? (
@@ -113,7 +112,7 @@ export default async function HomePage() {
           ))}
         </div>
         <p className="border-t border-line py-3 text-center text-[11px] tracking-wide text-muted">
-          Get exclusive offers on orders confirmed over WhatsApp
+          Get exclusive cashback on order above $500
         </p>
       </section>
 
@@ -132,7 +131,8 @@ export default async function HomePage() {
 
       {/* Secondary banner */}
       <section className="relative overflow-hidden bg-blush">
-        <div className="pointer-events-none absolute inset-0 opacity-[0.07]"
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:
               "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 5c8 10 20 12 20 28S38 55 30 55 10 49 10 33 22 15 30 5z' fill='%23111111' fill-opacity='0.4'/%3E%3C/svg%3E\")",

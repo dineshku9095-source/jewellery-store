@@ -23,8 +23,8 @@ const sans = Jost({
 });
 
 export const metadata: Metadata = {
-  title: "Jewellery Store — Classic Jewellery Collection",
-  description: "Elegant jewellery for every story. Guest checkout via WhatsApp.",
+  title: "Elements Jewellery — Classic Jewellery Collection",
+  description: "Every piece of jewellery tells a story. Guest checkout via WhatsApp.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
