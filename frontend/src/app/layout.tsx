@@ -28,12 +28,12 @@ export const metadata: Metadata = {
     "Queen's Jewels Aura — premium antitarnish jewellery. Guest checkout via WhatsApp.",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
       { url: "/icon.png", type: "image/png", sizes: "32x32" },
       { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/favicon.ico", sizes: "any" },
     ],
     apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
-    shortcut: ["/favicon.ico"],
+    shortcut: ["/icon.png"],
   },
 };
 
