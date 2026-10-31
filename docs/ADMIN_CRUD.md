@@ -9,11 +9,36 @@
 |---------|------|--------|------|--------|----------------------|
 | Categories | ✓ | ✓ | ✓ | ✓ (nullifies product.categoryId) | — |
 | Collections | ✓ | ✓ | ✓ | ✓ | isPublished toggle |
-| Products | ✓ | ✓ (+ image URLs) | ✓ | ✓ (blocked if order items) | isPublished toggle |
-| Product images | ✓ | ✓ | — | ✓ (+ Cloudinary destroy when configured) | — |
+| Products | ✓ | ✓ (+ **file upload**) | ✓ | ✓ (blocked if order items) | isPublished toggle |
+| Product images | ✓ | ✓ file picker → Cloudinary | — | ✓ DB + Cloudinary destroy | — |
 | Banners | ✓ | ✓ | ✓ | ✓ | isActive toggle |
 | Orders | ✓ | — | status | — | status pipeline |
 | Settings | ✓ | — | ✓ | — | — |
+
+## Product image uploads
+
+Admin product create/edit uses a **multi-file picker**. Flow:
+
+1. Browser requests `GET /api/admin/uploads/sign` (authenticated).
+2. Files upload directly to Cloudinary with the signed params.
+3. API stores `ProductImage.url` (secure URL) + `ProductImage.publicId`.
+4. Delete image removes the DB row and calls Cloudinary destroy when keys exist.
+
+Optional “paste an image URL” remains as a secondary fallback (e.g. Unsplash).
+
+### Render env (API service)
+
+Set these on **jewellery-api** (never commit secrets):
+
+| Variable | Notes |
+|----------|--------|
+| `CLOUDINARY_CLOUD_NAME` | From Cloudinary dashboard |
+| `CLOUDINARY_API_KEY` | API Key |
+| `CLOUDINARY_API_SECRET` | API Secret |
+| `CLOUDINARY_FOLDER` | Optional, default `jewellery-store` |
+
+Free Cloudinary account is enough. After saving env vars, **Manual Deploy** the API (and ensure web is on latest `main`).  
+`GET /health` should show `"cloudinary":"ok"`. Without keys, the file picker shows a clear toast explaining which env vars to set; sign endpoint returns **503**.
 
 ## Delete semantics
 
