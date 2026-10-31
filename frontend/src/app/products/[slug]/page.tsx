@@ -1,10 +1,10 @@
-"use client";
-
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { formatINR, apiGet } from "@/lib/api";
-import { useCart } from "@/context/CartContext";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { apiGet } from "@/lib/api";
+import { AddToCart } from "@/components/AddToCart";
+
+export const dynamic = "force-dynamic";
 
 interface ProductDetail {
   id: string;
@@ -15,76 +15,52 @@ interface ProductDetail {
   variants: Array<{ id: string; label: string; price: string; stock: number }>;
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
-  const { addItem } = useCart();
-  const router = useRouter();
-  const [product, setProduct] = useState<ProductDetail | null>(null);
-  const [variantId, setVariantId] = useState<string>("");
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    apiGet<{ product: ProductDetail }>(`/api/products/${params.slug}`)
-      .then((data) => {
-        setProduct(data.product);
-        setVariantId(data.product.variants[0]?.id ?? "");
-      })
-      .catch((e) => setError(e.message));
-  }, [params.slug]);
-
-  if (error) return <p className="p-8 text-red-700">{error}</p>;
-  if (!product) return <p className="p-8 text-charcoal-muted">Loading…</p>;
+export default async function ProductPage({ params }: { params: { slug: string } }) {
+  let product: ProductDetail | null = null;
+  try {
+    const data = await apiGet<{ product: ProductDetail }>(`/api/products/${params.slug}`);
+    product = data.product;
+  } catch {
+    product = null;
+  }
+  if (!product) notFound();
 
   const image = product.images[0];
-  const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-2">
-      <div className="relative aspect-square bg-cream">
+    <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:gap-10 sm:py-12 md:grid-cols-2">
+      <div className="relative aspect-square overflow-hidden bg-soft">
         {image ? (
-          <Image src={image.url} alt={image.alt ?? product.name} fill className="object-cover" />
-        ) : null}
+          <Image
+            src={image.url}
+            alt={image.alt ?? product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width:768px) 100vw, 50vw"
+            priority
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-xs uppercase tracking-widest text-muted">
+            No image
+          </div>
+        )}
       </div>
       <div>
-        <h1 className="font-display text-4xl text-charcoal">{product.name}</h1>
-        {variant ? (
-          <p className="mt-2 text-xl text-champagne-dark">{formatINR(variant.price)}</p>
-        ) : null}
+        <p className="text-[11px] uppercase tracking-[0.22em] text-gold">
+          <Link href="/shop" className="hover:text-forest">
+            Shop
+          </Link>
+        </p>
+        <h1 className="mt-2 font-display text-3xl text-forest sm:text-4xl">{product.name}</h1>
         {product.description ? (
-          <p className="mt-6 text-charcoal-muted">{product.description}</p>
+          <p className="mt-6 text-sm leading-relaxed text-muted sm:text-base">{product.description}</p>
         ) : null}
-        <label className="mt-8 block text-sm uppercase tracking-widest text-charcoal-muted">
-          Variant
-          <select
-            className="input-field mt-2"
-            value={variantId}
-            onChange={(e) => setVariantId(e.target.value)}
-          >
-            {product.variants.map((v) => (
-              <option key={v.id} value={v.id} disabled={v.stock < 1}>
-                {v.label} {v.stock < 1 ? "(out of stock)" : ""}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          className="btn-primary mt-6 w-full md:w-auto"
-          disabled={!variant || variant.stock < 1}
-          onClick={() => {
-            if (!variant) return;
-            addItem({
-              variantId: variant.id,
-              productSlug: product.slug,
-              productName: product.name,
-              variantLabel: variant.label,
-              unitPrice: variant.price,
-              imageUrl: image?.url,
-            });
-            router.push("/cart");
-          }}
-        >
-          Add to cart
-        </button>
+        <AddToCart
+          productSlug={product.slug}
+          productName={product.name}
+          imageUrl={image?.url}
+          variants={product.variants}
+        />
       </div>
     </div>
   );

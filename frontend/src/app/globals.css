@@ -2,8 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  @apply scroll-smooth;
+}
+
 body {
-  @apply bg-cream text-ink font-sans antialiased;
+  @apply overflow-x-hidden bg-cream text-ink font-sans antialiased;
+}
+
+/* Prefer full-width buttons on narrow screens without fighting desktop */
+@media (max-width: 379px) {
+  .btn-outline-dark,
+  .btn-solid-dark,
+  .btn-outline-gold,
+  .btn-outline-light,
+  .btn-primary,
+  .btn-outline {
+    @apply px-5 tracking-[0.14em];
+  }
 }
 
 @keyframes fade-up {

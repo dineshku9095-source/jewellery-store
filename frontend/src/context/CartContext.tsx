@@ -33,6 +33,7 @@ function computeSubtotal(items: CartItem[]): string {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     try {
@@ -41,11 +42,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     } catch {
       /* ignore */
     }
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
+    if (!hydrated) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+  }, [items, hydrated]);
 
   const value = useMemo<CartContextValue>(
     () => ({

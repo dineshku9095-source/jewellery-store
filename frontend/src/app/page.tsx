@@ -40,7 +40,7 @@ export default async function HomePage() {
             <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-gold">
               {copy.heroEyebrow}
             </p>
-            <h1 className="mt-4 font-script text-5xl leading-tight text-forest md:text-6xl lg:text-[4.5rem]">
+            <h1 className="mt-4 font-script text-[2.75rem] leading-tight text-forest sm:text-5xl md:text-6xl lg:text-[4.5rem]">
               {copy.heroHeadline}
             </h1>
             <p className="mt-5 max-w-md text-sm leading-relaxed text-muted">{copy.heroBody}</p>
@@ -136,7 +136,9 @@ export default async function HomePage() {
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-gold">
               {copy.offerEyebrow}
             </p>
-            <h2 className="mt-3 font-script text-5xl text-cream md:text-6xl">{copy.offerHeadline}</h2>
+            <h2 className="mt-3 font-script text-[2.75rem] leading-tight text-cream sm:text-5xl md:text-6xl">
+              {copy.offerHeadline}
+            </h2>
             <p className="mt-4 max-w-md text-sm text-cream/75">{copy.offerBody}</p>
             <Link href={copy.offerCtaHref || "/shop"} className="btn-outline-gold mt-8">
               {copy.offerCtaLabel}

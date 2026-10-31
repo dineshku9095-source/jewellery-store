@@ -58,9 +58,9 @@ export default function CartPage() {
           </li>
         ))}
       </ul>
-      <div className="mt-8 flex items-center justify-between border-t border-charcoal/10 pt-6">
+      <div className="mt-8 flex flex-col gap-4 border-t border-charcoal/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
         <p className="font-display text-2xl">Subtotal {formatINR(subtotal)}</p>
-        <Link href="/checkout" className="btn-primary">
+        <Link href="/checkout" className="btn-primary w-full justify-center sm:w-auto">
           Checkout
         </Link>
       </div>
