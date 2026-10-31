@@ -1,17 +1,31 @@
 # Deployment guide
 
-Last updated: 2026-10-26 (JE-2)
+Last updated: 2026-10-31
 
 ## Live URLs
 
 | Resource | URL |
 |----------|-----|
-| GitHub repo | https://github.com/dineshku9095-source/jewellery-store — agent lacked `gh` auth / `GH_TOKEN` |
-| Render API (`jewellery-api`) | **Not deployed** — no `RENDER_API_KEY` / Render CLI |
-| Render Web (`jewellery-web`) | **Not deployed** |
-| Admin login (once live) | `https://<jewellery-web>/admin/login` |
+| GitHub repo | https://github.com/dineshku9095-source/jewellery-store |
+| Render API (`jewellery-api`) | https://jewellery-api-l84i.onrender.com |
+| Render Web (`jewellery-web`) | https://jewellery-web-3raw.onrender.com |
+| API health | https://jewellery-api-l84i.onrender.com/health |
+| Admin login | https://jewellery-web-3raw.onrender.com/admin/login |
 
-See Project store `internal/je2-deploy-report.md` and `internal/deploy-secrets-note.md` for generated bootstrap secrets and click-by-click steps.
+## Keep-alive (prevent Render free cold starts)
+
+Render **free** services sleep after ~15 minutes idle → storefront `/api/*` rewrites **502** until the API wakes.
+
+**Full guide:** [`docs/KEEP_ALIVE.md`](./KEEP_ALIVE.md)
+
+| Method | Signup? | Status |
+|--------|---------|--------|
+| [cron-job.org](https://cron-job.org) every 10 min on `/health` | Free account | **Recommended** — confirm after signup |
+| [UptimeRobot](https://uptimerobot.com) HTTPS monitor (5 min) | Free account | Alternative |
+| GitHub Actions schedule | No (uses repo) | YAML in `KEEP_ALIVE.md` — add via GitHub UI (agent token lacks `workflow` scope) |
+| `scripts/keep-alive.sh` | Local/VPS cron | Not for ephemeral Cloud Agent VMs |
+
+**Health URL to paste:** `https://jewellery-api-l84i.onrender.com/health`
 
 ## Prerequisites
 
