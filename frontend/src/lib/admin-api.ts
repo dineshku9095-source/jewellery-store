@@ -1,4 +1,4 @@
-import { apiGet, apiPatch, apiPost, apiPut, fetchAdminCsrf } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut, fetchAdminCsrf } from "@/lib/api";
 
 async function adminHeaders(): Promise<HeadersInit> {
   const csrfToken = await fetchAdminCsrf();
@@ -29,17 +29,31 @@ export async function adminList<T>(path: string): Promise<T> {
   return apiGet<T>(path);
 }
 
-export async function adminCreate(path: string, body: unknown) {
+export async function adminCreate<T = unknown>(path: string, body: unknown): Promise<T> {
   const headers = await adminHeaders();
-  return apiPost(path, body, headers);
+  return apiPost<T>(path, body, headers);
 }
 
-export async function adminUpdate(path: string, body: unknown) {
+export async function adminUpdate<T = unknown>(path: string, body: unknown): Promise<T> {
   const headers = await adminHeaders();
-  return apiPatch(path, body, headers);
+  return apiPatch<T>(path, body, headers);
 }
 
-export async function adminPut(path: string, body: unknown) {
+export async function adminPut<T = unknown>(path: string, body: unknown): Promise<T> {
   const headers = await adminHeaders();
-  return apiPut(path, body, headers);
+  return apiPut<T>(path, body, headers);
+}
+
+export async function adminDelete<T = unknown>(path: string): Promise<T> {
+  const headers = await adminHeaders();
+  return apiDelete<T>(path, headers);
+}
+
+export function slugify(input: string): string {
+  return input
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
 }

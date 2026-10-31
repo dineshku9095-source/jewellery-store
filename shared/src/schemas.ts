@@ -61,7 +61,14 @@ export const bannerInputSchema = z.object({
   title: z.string().min(2).max(200),
   subtitle: z.string().max(300).optional(),
   imageUrl: z.string().url(),
-  linkUrl: z.string().url().optional().or(z.literal("")),
+  linkUrl: z
+    .string()
+    .max(500)
+    .refine((v) => v === "" || v.startsWith("/") || /^https?:\/\//i.test(v), {
+      message: "linkUrl must be a path or URL",
+    })
+    .optional()
+    .or(z.literal("")),
   sortOrder: z.number().int().min(0).optional(),
   isActive: z.boolean().optional(),
 });

@@ -29,5 +29,15 @@ export function csrfProtection(
 }
 
 export function attachCsrfToken(req: Request, res: Response): string {
+  // Session identifier changes on login; clear prior CSRF cookie so a new
+  // token can be minted for the authenticated session.
+  res.clearCookie("jewellery_csrf", {
+    path: "/",
+    sameSite: config.cookieSameSite,
+    secure: config.cookieSecure,
+    httpOnly: true,
+  });
+  // Also drop from the request so generateToken does not validate the stale pair.
+  if (req.cookies) delete req.cookies.jewellery_csrf;
   return generateToken(req, res);
 }

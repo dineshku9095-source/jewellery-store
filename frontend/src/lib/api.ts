@@ -69,6 +69,21 @@ export async function apiPut<T>(path: string, body: unknown, headers?: HeadersIn
   return res.json();
 }
 
+export async function apiDelete<T>(path: string, headers?: HeadersInit): Promise<T> {
+  const base = getApiBase();
+  const url = path.startsWith("/") ? `${base}${path}` : path;
+  const res = await fetch(url, {
+    method: "DELETE",
+    credentials: "include",
+    headers: { ...headers },
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error ?? `Request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
 export async function fetchAdminCsrf(): Promise<string> {
   const data = await apiGet<{ csrfToken: string }>("/api/admin/csrf");
   return data.csrfToken;

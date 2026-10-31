@@ -32,3 +32,16 @@ export function getSignedUploadParams(folder = "jewellery"): {
     folder,
   };
 }
+
+/** Best-effort Cloudinary destroy from a delivery URL. No-op if unconfigured or not a Cloudinary URL. */
+export async function destroyCloudinaryByUrl(url: string): Promise<void> {
+  if (!cloudinaryConfigured() || !url.includes("res.cloudinary.com")) return;
+  try {
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z0-9]+(?:\?.*)?$/);
+    const publicId = match?.[1];
+    if (!publicId) return;
+    await cloudinary.uploader.destroy(publicId);
+  } catch {
+    // DB row will still be removed by the caller
+  }
+}
