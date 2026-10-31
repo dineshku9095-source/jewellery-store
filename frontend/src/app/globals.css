@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply bg-white text-ink font-sans antialiased;
+  @apply bg-cream text-ink font-sans antialiased;
 }
 
 @keyframes fade-up {
@@ -22,27 +22,31 @@ body {
 }
 
 .btn-outline-dark {
-  @apply inline-flex items-center justify-center border border-ink bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink transition hover:bg-ink hover:text-white;
+  @apply inline-flex items-center justify-center border border-forest bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-forest transition hover:bg-forest hover:text-cream;
 }
 
 .btn-solid-dark {
-  @apply inline-flex items-center justify-center border border-ink bg-ink px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white hover:text-ink;
+  @apply inline-flex items-center justify-center border border-forest bg-forest px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-cream transition hover:border-gold hover:bg-gold hover:text-forest-deep;
+}
+
+.btn-outline-gold {
+  @apply inline-flex items-center justify-center border border-gold bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-gold transition hover:bg-gold hover:text-forest-deep;
 }
 
 .btn-outline-light {
-  @apply inline-flex items-center justify-center border border-white bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white hover:text-ink;
+  @apply inline-flex items-center justify-center border border-cream bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-cream transition hover:bg-cream hover:text-forest;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center border border-ink bg-ink px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white hover:text-ink;
+  @apply inline-flex items-center justify-center border border-forest bg-forest px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-cream transition hover:border-gold hover:bg-gold hover:text-forest-deep;
 }
 
 .btn-outline {
-  @apply inline-flex items-center justify-center border border-ink bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink transition hover:bg-ink hover:text-white;
+  @apply inline-flex items-center justify-center border border-forest bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-forest transition hover:bg-forest hover:text-cream;
 }
 
 .input-field {
-  @apply w-full border border-line bg-white px-4 py-3 text-ink outline-none focus:border-ink;
+  @apply w-full border border-line bg-cream px-4 py-3 text-ink outline-none focus:border-forest;
 }
 
 .prose-store {

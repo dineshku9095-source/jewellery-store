@@ -40,14 +40,14 @@ export function ProductCard({ product }: { product: PublicProduct }) {
         ) : null}
         {outOfStock ? (
           <div className="absolute inset-0 flex items-center justify-center bg-white/55">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-ink">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] text-forest">
               Out of stock
             </span>
           </div>
         ) : null}
       </div>
       <div className="mt-4 text-center">
-        <h3 className="text-sm font-medium text-ink">{product.name}</h3>
+        <h3 className="text-sm font-medium text-forest">{product.name}</h3>
         <p className="mt-1 text-sm text-muted">
           {formatINR(price)}
           {compareAt ? (

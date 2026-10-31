@@ -5,20 +5,25 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: "#111111",
-        muted: "#6b6b6b",
-        line: "#e8e8e8",
-        blush: "#f7f0ee",
-        "blush-deep": "#efe4e0",
-        soft: "#f5f5f5",
-        sale: "#c45c5c",
+        // Queen's Jewels Aura — emerald + gold
+        ink: "#0B2E26",
+        muted: "#5c6f69",
+        line: "#d7e0dc",
+        blush: "#eef4f1",
+        "blush-deep": "#dce8e3",
+        soft: "#f3f6f4",
+        sale: "#a63d3d",
+        forest: "#0B2E26",
+        "forest-deep": "#06201B",
+        gold: "#C5A059",
+        "gold-soft": "#E8D5A3",
+        cream: "#F5F1E8",
         // legacy aliases (admin + existing pages)
-        ivory: "#ffffff",
-        cream: "#f7f0ee",
-        champagne: "#111111",
-        "champagne-dark": "#6b6b6b",
-        charcoal: "#111111",
-        "charcoal-muted": "#6b6b6b",
+        ivory: "#F5F1E8",
+        champagne: "#0B2E26",
+        "champagne-dark": "#5c6f69",
+        charcoal: "#0B2E26",
+        "charcoal-muted": "#5c6f69",
       },
       fontFamily: {
         script: ["var(--font-script)", "cursive"],

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/context/CartContext";
@@ -10,76 +11,86 @@ export function SiteHeader() {
   if (pathname?.startsWith("/admin")) return null;
 
   return (
-    <header className="sticky top-0 z-50 bg-white">
-      <div className="bg-ink text-[11px] text-white">
+    <header className="sticky top-0 z-50 bg-cream">
+      <div className="bg-forest text-[11px] text-cream">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2">
           <a
-            href="mailto:hello@elementsjewellery.example"
-            className="hidden opacity-90 hover:opacity-100 sm:inline"
+            href="mailto:hello@queensjewelsaura.example"
+            className="hidden text-gold-soft/90 hover:text-gold-soft sm:inline"
           >
-            hello@elementsjewellery.example
+            hello@queensjewelsaura.example
           </a>
-          <p className="flex-1 text-center tracking-wide">New Summer Sale 50% Off</p>
-          <div className="hidden items-center gap-4 opacity-90 sm:flex">
-            <Link href="/checkout" className="hover:opacity-100">
+          <p className="flex-1 text-center tracking-wide text-cream/95">
+            New Summer Sale 50% Off · Premium antitarnish pieces
+          </p>
+          <div className="hidden items-center gap-4 text-gold-soft/90 sm:flex">
+            <Link href="/checkout" className="hover:text-gold-soft">
               Checkout
             </Link>
-            <Link href="/cart" className="hover:opacity-100">
+            <Link href="/cart" className="hover:text-gold-soft">
               Wishlist
             </Link>
-            <Link href="/contact" className="hover:opacity-100">
+            <Link href="/contact" className="hover:text-gold-soft">
               Contact
             </Link>
           </div>
         </div>
       </div>
 
-      <div className="border-b border-line">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center border border-ink">
-              <JewelMark />
-            </span>
-            <span className="text-[13px] font-semibold uppercase tracking-[0.2em] text-ink">
-              Elements Jewellery
+      <div className="border-b border-line bg-cream">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
+              src="/brand/qj-logo.jpg"
+              alt="Queen's Jewels Aura logo"
+              width={52}
+              height={52}
+              className="h-12 w-12 rounded-full object-cover shadow-sm ring-1 ring-gold/40"
+              priority
+            />
+            <span className="leading-tight">
+              <span className="block font-display text-lg tracking-wide text-forest md:text-xl">
+                Queen&apos;s Jewels
+              </span>
+              <span className="block font-script text-xl text-gold md:text-2xl">Aura</span>
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-7 text-[12px] font-medium uppercase tracking-[0.16em] text-ink lg:flex">
-            <Link href="/shop" className="hover:opacity-60">
+          <nav className="hidden items-center gap-7 text-[12px] font-medium uppercase tracking-[0.16em] text-forest lg:flex">
+            <Link href="/shop" className="hover:text-gold">
               Jewellery
             </Link>
-            <Link href="/about" className="hover:opacity-60">
+            <Link href="/about" className="hover:text-gold">
               Blogs
             </Link>
-            <Link href="/shop" className="hover:opacity-60">
+            <Link href="/shop" className="hover:text-gold">
               Accessories
             </Link>
-            <Link href="/collections" className="hover:opacity-60">
+            <Link href="/collections" className="hover:text-gold">
               Collection
             </Link>
-            <Link href="/category" className="hover:opacity-60">
+            <Link href="/category" className="hover:text-gold">
               Category
             </Link>
-            <Link href="/contact" className="hover:opacity-60">
+            <Link href="/contact" className="hover:text-gold">
               Contact
             </Link>
           </nav>
 
-          <div className="flex items-center gap-4 text-ink">
-            <Link href="/shop" aria-label="Search shop" className="hover:opacity-60">
+          <div className="flex items-center gap-4 text-forest">
+            <Link href="/shop" aria-label="Search shop" className="hover:text-gold">
               <SearchIcon />
             </Link>
-            <Link href="/admin/login" aria-label="Account" className="hidden hover:opacity-60 sm:inline">
+            <Link href="/admin/login" aria-label="Account" className="hidden hover:text-gold sm:inline">
               <UserIcon />
             </Link>
-            <Link href="/cart" aria-label="Wishlist" className="hidden hover:opacity-60 sm:inline">
+            <Link href="/cart" aria-label="Wishlist" className="hidden hover:text-gold sm:inline">
               <HeartIcon />
             </Link>
-            <Link href="/cart" aria-label="Bag" className="relative hover:opacity-60">
+            <Link href="/cart" aria-label="Bag" className="relative hover:text-gold">
               <BagIcon />
               {count > 0 ? (
-                <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-ink px-1 text-[10px] text-white">
+                <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-gold px-1 text-[10px] text-forest-deep">
                   {count}
                 </span>
               ) : null}
@@ -88,15 +99,6 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
-  );
-}
-
-function JewelMark() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4">
-      <path d="M12 3l3.5 6H20l-4 8H8L4 9h4.5L12 3z" />
-      <path d="M8 9h8" />
-    </svg>
   );
 }
 
@@ -140,54 +142,80 @@ export function SiteFooter() {
   if (pathname?.startsWith("/admin")) return null;
 
   return (
-    <footer className="mt-16 border-t border-line bg-blush">
+    <footer className="mt-16 border-t border-gold/20 bg-forest text-cream">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4">
         <div className="md:col-span-2">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-ink">
-            Elements Jewellery
-          </p>
-          <p className="mt-3 max-w-md text-sm leading-relaxed text-muted">
-            Every piece of jewellery tells a story. Browse as a guest and complete checkout over
-            WhatsApp — payment is arranged with the shop.
+          <div className="flex items-center gap-3">
+            <Image
+              src="/brand/qj-logo.jpg"
+              alt=""
+              width={48}
+              height={48}
+              className="h-12 w-12 rounded-full object-cover ring-1 ring-gold/50"
+            />
+            <div>
+              <p className="font-display text-lg text-gold-soft">Queen&apos;s Jewels</p>
+              <p className="font-script text-xl text-gold">Aura</p>
+            </div>
+          </div>
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-cream/75">
+            Premium quality, antitarnish, and gold-covering pieces — plus antique collections.
+            Browse as a guest and complete checkout over WhatsApp.
           </p>
         </div>
-        <div className="text-sm text-muted">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink">Explore</p>
+        <div className="text-sm text-cream/75">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">Explore</p>
           <ul className="space-y-2">
             <li>
-              <Link href="/shop">Shop</Link>
+              <Link href="/shop" className="hover:text-gold-soft">
+                Shop
+              </Link>
             </li>
             <li>
-              <Link href="/collections">Collections</Link>
+              <Link href="/collections" className="hover:text-gold-soft">
+                Collections
+              </Link>
             </li>
             <li>
-              <Link href="/faq">FAQ</Link>
+              <Link href="/faq" className="hover:text-gold-soft">
+                FAQ
+              </Link>
             </li>
             <li>
-              <Link href="/shipping">Shipping</Link>
+              <Link href="/shipping" className="hover:text-gold-soft">
+                Shipping
+              </Link>
             </li>
           </ul>
         </div>
-        <div className="text-sm text-muted">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-ink">Help</p>
+        <div className="text-sm text-cream/75">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">Help</p>
           <ul className="space-y-2">
             <li>
-              <Link href="/contact">Contact</Link>
+              <Link href="/contact" className="hover:text-gold-soft">
+                Contact
+              </Link>
             </li>
             <li>
-              <Link href="/privacy">Privacy</Link>
+              <Link href="/privacy" className="hover:text-gold-soft">
+                Privacy
+              </Link>
             </li>
             <li>
-              <Link href="/terms">Terms</Link>
+              <Link href="/terms" className="hover:text-gold-soft">
+                Terms
+              </Link>
             </li>
             <li>
-              <Link href="/admin/login">Admin</Link>
+              <Link href="/admin/login" className="hover:text-gold-soft">
+                Admin
+              </Link>
             </li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-line/80 py-4 text-center text-[11px] uppercase tracking-wider text-muted">
-        © {new Date().getFullYear()} Elements Jewellery
+      <div className="border-t border-gold/20 py-4 text-center text-[11px] uppercase tracking-wider text-cream/60">
+        © {new Date().getFullYear()} Queen&apos;s Jewels Aura
       </div>
     </footer>
   );

@@ -38,14 +38,14 @@ async function main() {
   await prisma.storeSettings.upsert({
     where: { id: 1 },
     update: {
-      storeName: "Elements Jewellery",
+      storeName: "Queen's Jewels Aura",
       tagline: "Every piece of jewellery tells a story",
     },
     create: {
       id: 1,
-      storeName: "Elements Jewellery",
+      storeName: "Queen's Jewels Aura",
       tagline: "Every piece of jewellery tells a story",
-      contactEmail: "hello@elementsjewellery.example",
+      contactEmail: "hello@queensjewelsaura.example",
       contactPhone: "+919876543210",
       whatsappNumber: "919876543210",
       address: "12 Heritage Lane, Mumbai",

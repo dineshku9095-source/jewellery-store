@@ -25,7 +25,9 @@ export function TrendingTabs({ products }: { products: PublicProduct[] }) {
             type="button"
             onClick={() => setTab(t)}
             className={
-              tab === t ? "text-ink underline decoration-2 underline-offset-8" : "text-muted hover:text-ink"
+              tab === t
+                ? "text-forest underline decoration-gold decoration-2 underline-offset-8"
+                : "text-muted hover:text-forest"
             }
           >
             {t}
