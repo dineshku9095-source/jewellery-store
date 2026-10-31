@@ -1,6 +1,6 @@
 # Implementation status
 
-Last updated: 2026-10-30
+Last updated: 2026-10-31
 
 ## Summary
 
@@ -10,9 +10,9 @@ Last updated: 2026-10-30
 | Prisma schema + migration + seed | Done |
 | Backend REST API + auth + checkout | Done |
 | Shared Zod / money / WhatsApp helpers | Done |
-| Storefront (Refine Gilt theme) | Done |
-| Admin UI | Done |
-| Cloudinary signed upload helper | Done |
+| Storefront (Queen's Jewels Aura green theme) | Done |
+| Admin UI (full CRUD + publish toggles) | Done — see [ADMIN_CRUD.md](./ADMIN_CRUD.md) |
+| Cloudinary signed upload + best-effort destroy | Done |
 | Unit tests (money, WhatsApp) | Done |
 | Docs + render.yaml + .env.example | Done |
 
@@ -37,7 +37,7 @@ Login, dashboard, products, categories, collections, banners, orders (+ detail),
 
 ## Live GitHub (JE-2)
 
-- Repo: https://github.com/dineshkumar27471/Jewellery-Store-monorepo-
+- Repo: https://github.com/dineshku9095-source/jewellery-store
 - Commit: `bdb37c5c5dc931ba3ff54a3cf634c52f546845fc`
 - Render: pending (no RENDER_API_KEY)
 
