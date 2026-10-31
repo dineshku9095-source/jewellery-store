@@ -11,7 +11,7 @@ export function initCloudinary(): void {
   });
 }
 
-export function getSignedUploadParams(folder = "jewellery"): {
+export function getSignedUploadParams(folder?: string): {
   timestamp: number;
   signature: string;
   apiKey: string;
@@ -21,27 +21,38 @@ export function getSignedUploadParams(folder = "jewellery"): {
   if (!cloudinaryConfigured()) {
     throw new Error("Cloudinary is not configured");
   }
+  const resolvedFolder = folder || config.cloudinary.folder || "jewellery-store";
   const timestamp = Math.round(Date.now() / 1000);
-  const paramsToSign = { timestamp, folder };
+  const paramsToSign = { timestamp, folder: resolvedFolder };
   const signature = cloudinary.utils.api_sign_request(paramsToSign, config.cloudinary.apiSecret);
   return {
     timestamp,
     signature,
     apiKey: config.cloudinary.apiKey,
     cloudName: config.cloudinary.cloudName,
-    folder,
+    folder: resolvedFolder,
   };
 }
 
-/** Best-effort Cloudinary destroy from a delivery URL. No-op if unconfigured or not a Cloudinary URL. */
-export async function destroyCloudinaryByUrl(url: string): Promise<void> {
-  if (!cloudinaryConfigured() || !url.includes("res.cloudinary.com")) return;
+export async function destroyCloudinaryAsset(opts: {
+  publicId?: string | null;
+  url?: string | null;
+}): Promise<void> {
+  if (!cloudinaryConfigured()) return;
+  let publicId = opts.publicId?.trim() || null;
+  if (!publicId && opts.url?.includes("res.cloudinary.com")) {
+    const match = opts.url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z0-9]+(?:\?.*)?$/);
+    publicId = match?.[1] ?? null;
+  }
+  if (!publicId) return;
   try {
-    const match = url.match(/\/upload\/(?:v\d+\/)?(.+)\.[a-zA-Z0-9]+(?:\?.*)?$/);
-    const publicId = match?.[1];
-    if (!publicId) return;
     await cloudinary.uploader.destroy(publicId);
   } catch {
     // DB row will still be removed by the caller
   }
+}
+
+/** @deprecated prefer destroyCloudinaryAsset */
+export async function destroyCloudinaryByUrl(url: string): Promise<void> {
+  await destroyCloudinaryAsset({ url });
 }

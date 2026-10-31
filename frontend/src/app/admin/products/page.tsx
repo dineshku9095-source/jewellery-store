@@ -10,6 +10,7 @@ import {
   adminUpdate,
   slugify,
 } from "@/lib/admin-api";
+import { uploadImageFiles, type UploadedImage } from "@/lib/cloudinary-upload";
 import {
   AdminEmpty,
   AdminField,
@@ -21,7 +22,13 @@ import {
 } from "@/components/admin/AdminUi";
 
 type Category = { id: string; name: string };
-type ProductImage = { id: string; url: string; alt?: string | null; sortOrder: number };
+type ProductImage = {
+  id: string;
+  url: string;
+  publicId?: string | null;
+  alt?: string | null;
+  sortOrder: number;
+};
 type Variant = {
   id?: string;
   sku: string;
@@ -52,8 +59,10 @@ type FormState = {
   label: string;
   price: string;
   stock: string;
-  imageUrls: string;
+  optionalUrl: string;
 };
+
+type PendingFile = { id: string; file: File; preview: string };
 
 const emptyForm: FormState = {
   name: "",
@@ -65,7 +74,7 @@ const emptyForm: FormState = {
   label: "Standard",
   price: "0.00",
   stock: "0",
-  imageUrls: "",
+  optionalUrl: "",
 };
 
 export default function AdminProductsPage() {
@@ -76,8 +85,11 @@ export default function AdminProductsPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingImages, setEditingImages] = useState<ProductImage[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showUrlFallback, setShowUrlFallback] = useState(false);
 
   const load = useCallback(async () => {
     const [p, c] = await Promise.all([
@@ -94,11 +106,52 @@ export default function AdminProductsPage() {
       .catch(() => router.replace("/admin/login"));
   }, [load, router]);
 
+  useEffect(() => {
+    return () => {
+      pendingFiles.forEach((p) => URL.revokeObjectURL(p.preview));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup on unmount only
+  }, []);
+
+  function clearPending() {
+    setPendingFiles((prev) => {
+      prev.forEach((p) => URL.revokeObjectURL(p.preview));
+      return [];
+    });
+  }
+
   function resetForm() {
     setEditingId(null);
     setEditingImages([]);
+    clearPending();
     setForm(emptyForm);
     setShowForm(false);
+    setShowUrlFallback(false);
+  }
+
+  function onPickFiles(list: FileList | null) {
+    if (!list?.length) return;
+    const next: PendingFile[] = [];
+    for (const file of Array.from(list)) {
+      if (!file.type.startsWith("image/")) {
+        showErr(`Skipped “${file.name}” — not an image`);
+        continue;
+      }
+      next.push({
+        id: `${file.name}-${file.size}-${file.lastModified}-${Math.random()}`,
+        file,
+        preview: URL.createObjectURL(file),
+      });
+    }
+    if (next.length) setPendingFiles((prev) => [...prev, ...next]);
+  }
+
+  function removePending(id: string) {
+    setPendingFiles((prev) => {
+      const hit = prev.find((p) => p.id === id);
+      if (hit) URL.revokeObjectURL(hit.preview);
+      return prev.filter((p) => p.id !== id);
+    });
   }
 
   async function startEdit(id: string) {
@@ -108,6 +161,7 @@ export default function AdminProductsPage() {
       const v = product.variants[0];
       setEditingId(product.id);
       setEditingImages(product.images ?? []);
+      clearPending();
       setForm({
         name: product.name,
         slug: product.slug,
@@ -118,7 +172,7 @@ export default function AdminProductsPage() {
         label: v?.label ?? "Standard",
         price: v?.price ?? "0.00",
         stock: String(v?.stock ?? 0),
-        imageUrls: "",
+        optionalUrl: "",
       });
       setShowForm(true);
     } catch (err) {
@@ -128,14 +182,28 @@ export default function AdminProductsPage() {
     }
   }
 
+  async function collectUploads(): Promise<UploadedImage[]> {
+    const uploaded: UploadedImage[] = [];
+    if (pendingFiles.length) {
+      setUploading(true);
+      try {
+        uploaded.push(...(await uploadImageFiles(pendingFiles.map((p) => p.file))));
+      } finally {
+        setUploading(false);
+      }
+    }
+    const extra = form.optionalUrl.trim();
+    if (extra) {
+      uploaded.push({ url: extra, publicId: "" });
+    }
+    return uploaded;
+  }
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     try {
-      const urls = form.imageUrls
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const uploaded = await collectUploads();
       const variant = {
         sku: form.sku.trim() || `${slugify(form.name) || "item"}-std`,
         label: form.label.trim() || "Standard",
@@ -154,12 +222,25 @@ export default function AdminProductsPage() {
 
       if (editingId) {
         await adminUpdate(`/api/admin/products/${editingId}`, body);
-        for (const url of urls) {
-          await adminCreate(`/api/admin/products/${editingId}/images`, { url, alt: form.name });
+        for (const [i, img] of uploaded.entries()) {
+          await adminCreate(`/api/admin/products/${editingId}/images`, {
+            url: img.url,
+            publicId: img.publicId || undefined,
+            alt: form.name,
+            sortOrder: editingImages.length + i,
+          });
         }
-        showOk("Product updated");
+        showOk(uploaded.length ? "Product updated with new images" : "Product updated");
       } else {
-        await adminCreate("/api/admin/products", { ...body, imageUrls: urls });
+        await adminCreate("/api/admin/products", {
+          ...body,
+          images: uploaded.map((img, i) => ({
+            url: img.url,
+            publicId: img.publicId || undefined,
+            alt: form.name,
+            sortOrder: i,
+          })),
+        });
         showOk("Product created");
       }
       resetForm();
@@ -168,6 +249,7 @@ export default function AdminProductsPage() {
       showErr(err instanceof Error ? err.message : "Save failed");
     } finally {
       setBusy(false);
+      setUploading(false);
     }
   }
 
@@ -212,7 +294,7 @@ export default function AdminProductsPage() {
     <div>
       <AdminPageHeader
         title="Products"
-        subtitle="Create, edit, publish, and delete products with multiple images."
+        subtitle="Create, edit, publish, and delete products. Upload images from your device."
         actions={
           <button
             type="button"
@@ -313,33 +395,83 @@ export default function AdminProductsPage() {
                 />
               </AdminField>
             </div>
-            <div className="md:col-span-2">
-              <AdminField label="Image URLs (one per line)">
-                <textarea
-                  className="input-field font-mono text-xs"
-                  rows={3}
-                  value={form.imageUrls}
-                  onChange={(e) => setForm((f) => ({ ...f, imageUrls: e.target.value }))}
-                  placeholder="https://images.unsplash.com/…"
-                />
+
+            <div className="md:col-span-2 space-y-3">
+              <AdminField label="Product images">
+                <div className="rounded border border-dashed border-line bg-cream px-4 py-5">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="block w-full text-sm text-muted file:mr-3 file:border file:border-forest file:bg-white file:px-3 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-widest file:text-forest hover:file:bg-forest hover:file:text-cream"
+                    onChange={(e) => {
+                      onPickFiles(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <p className="mt-2 text-xs text-muted">
+                    Select one or more images (max 8MB each). Uploads go to Cloudinary when keys are
+                    configured on the API.
+                  </p>
+                </div>
               </AdminField>
-              {editingImages.length > 0 ? (
-                <ul className="mt-2 space-y-1 text-xs text-muted">
-                  {editingImages.map((img) => (
-                    <li key={img.id} className="flex items-center justify-between gap-2">
-                      <span className="truncate">{img.url}</span>
+
+              {pendingFiles.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {pendingFiles.map((p) => (
+                    <div key={p.id} className="relative overflow-hidden rounded border border-line bg-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={p.preview} alt="" className="aspect-square w-full object-cover" />
                       <button
                         type="button"
-                        className="shrink-0 text-sale underline"
-                        onClick={() => removeImage(img.id)}
+                        className="absolute right-1 top-1 bg-white/90 px-2 py-0.5 text-[10px] uppercase tracking-wide text-sale"
+                        onClick={() => removePending(p.id)}
                       >
                         Remove
                       </button>
-                    </li>
+                      <p className="truncate px-2 py-1 text-[10px] text-muted">{p.file.name}</p>
+                    </div>
                   ))}
-                </ul>
+                </div>
+              ) : null}
+
+              {editingImages.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {editingImages.map((img) => (
+                    <div key={img.id} className="relative overflow-hidden rounded border border-line bg-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={img.url} alt={img.alt ?? ""} className="aspect-square w-full object-cover" />
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 bg-white/90 px-2 py-0.5 text-[10px] uppercase tracking-wide text-sale"
+                        onClick={() => removeImage(img.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              <button
+                type="button"
+                className="text-xs text-muted underline"
+                onClick={() => setShowUrlFallback((v) => !v)}
+              >
+                {showUrlFallback ? "Hide URL option" : "Or paste an image URL (optional)"}
+              </button>
+              {showUrlFallback ? (
+                <AdminField label="Image URL">
+                  <input
+                    className="input-field font-mono text-xs"
+                    value={form.optionalUrl}
+                    onChange={(e) => setForm((f) => ({ ...f, optionalUrl: e.target.value }))}
+                    placeholder="https://…"
+                  />
+                </AdminField>
               ) : null}
             </div>
+
             <label className="flex items-center gap-2 text-sm text-forest md:col-span-2">
               <input
                 type="checkbox"
@@ -349,10 +481,14 @@ export default function AdminProductsPage() {
               Published on storefront
             </label>
             <div className="flex gap-2 md:col-span-2">
-              <button type="submit" className="btn-primary" disabled={busy}>
-                {editingId ? "Update product" : "Create product"}
+              <button type="submit" className="btn-primary" disabled={busy || uploading}>
+                {uploading
+                  ? "Uploading images…"
+                  : editingId
+                    ? "Update product"
+                    : "Create product"}
               </button>
-              <button type="button" className="btn-outline-dark" onClick={resetForm}>
+              <button type="button" className="btn-outline-dark" onClick={resetForm} disabled={busy}>
                 Cancel
               </button>
             </div>
@@ -366,12 +502,26 @@ export default function AdminProductsPage() {
         ) : (
           products.map((p) => (
             <AdminPanel key={p.id} className="flex flex-wrap items-center justify-between gap-3 !py-3">
-              <div className="min-w-0">
-                <p className="font-medium text-forest">{p.name}</p>
-                <p className="text-xs text-muted">
-                  {p.slug} · {p.category?.name ?? "Uncategorised"} ·{" "}
-                  {p.isPublished ? "Published" : "Draft"} · {p.images?.length ?? 0} images
-                </p>
+              <div className="flex min-w-0 items-center gap-3">
+                {p.images?.[0]?.url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.images[0].url}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded bg-soft text-[10px] text-muted">
+                    No img
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <p className="font-medium text-forest">{p.name}</p>
+                  <p className="text-xs text-muted">
+                    {p.slug} · {p.category?.name ?? "Uncategorised"} ·{" "}
+                    {p.isPublished ? "Published" : "Draft"} · {p.images?.length ?? 0} images
+                  </p>
+                </div>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button type="button" className="btn-outline-dark !px-3 !py-1.5 text-[10px]" onClick={() => togglePublish(p)}>

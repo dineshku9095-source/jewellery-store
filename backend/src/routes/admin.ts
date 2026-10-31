@@ -22,7 +22,7 @@ import {
 import { config } from "../config";
 import { prisma } from "../lib/prisma";
 import { writeAuditLog } from "../services/audit";
-import { destroyCloudinaryByUrl, getSignedUploadParams } from "../services/cloudinary";
+import { destroyCloudinaryAsset, getSignedUploadParams } from "../services/cloudinary";
 import { serializeOrder, updateOrderStatus } from "../services/orderService";
 
 export const adminRouter = Router();
@@ -162,9 +162,33 @@ adminRouter.get("/products/:id", requireAdmin, async (req, res, next) => {
 adminRouter.post("/products", requireAdmin, async (req: AuthedRequest, res, next) => {
   try {
     const parsed = productInputSchema.parse(req.body);
-    const imageUrls = Array.isArray(req.body.imageUrls)
-      ? (req.body.imageUrls as unknown[]).filter((u): u is string => typeof u === "string" && u.length > 0)
-      : [];
+    type ImageInput = {
+      url: string;
+      publicId: string | null;
+      alt: string;
+      sortOrder: number;
+    };
+    const images: ImageInput[] = [];
+    const rawImages = Array.isArray(req.body.images) ? req.body.images : [];
+    for (const [i, item] of rawImages.entries()) {
+      if (!item || typeof item !== "object") continue;
+      const row = item as { url?: unknown; publicId?: unknown; alt?: unknown; sortOrder?: unknown };
+      if (typeof row.url !== "string" || !row.url) continue;
+      images.push({
+        url: row.url,
+        publicId: typeof row.publicId === "string" ? row.publicId : null,
+        alt: typeof row.alt === "string" ? row.alt : parsed.name,
+        sortOrder: typeof row.sortOrder === "number" ? row.sortOrder : i,
+      });
+    }
+    // Back-compat: plain URL list
+    if (!images.length && Array.isArray(req.body.imageUrls)) {
+      for (const [i, url] of (req.body.imageUrls as unknown[]).entries()) {
+        if (typeof url === "string" && url) {
+          images.push({ url, publicId: null, alt: parsed.name, sortOrder: i });
+        }
+      }
+    }
     const product = await prisma.product.create({
       data: {
         name: parsed.name,
@@ -181,15 +205,7 @@ adminRouter.post("/products", requireAdmin, async (req: AuthedRequest, res, next
             isActive: v.isActive ?? true,
           })),
         },
-        images: imageUrls.length
-          ? {
-              create: imageUrls.map((url, i) => ({
-                url,
-                alt: parsed.name,
-                sortOrder: i,
-              })),
-            }
-          : undefined,
+        images: images.length ? { create: images } : undefined,
       },
       include: { variants: true, images: true },
     });
@@ -288,7 +304,7 @@ adminRouter.delete("/products/:id", requireAdmin, async (req: AuthedRequest, res
     }
     const images = await prisma.productImage.findMany({ where: { productId: id } });
     for (const img of images) {
-      await destroyCloudinaryByUrl(img.url);
+      await destroyCloudinaryAsset({ publicId: img.publicId, url: img.url });
     }
     await prisma.product.delete({ where: { id } });
     await writeAuditLog({
@@ -305,8 +321,9 @@ adminRouter.delete("/products/:id", requireAdmin, async (req: AuthedRequest, res
 
 adminRouter.post("/products/:id/images", requireAdmin, async (req: AuthedRequest, res, next) => {
   try {
-    const { url, alt, sortOrder } = req.body as {
+    const { url, publicId, alt, sortOrder } = req.body as {
       url: string;
+      publicId?: string;
       alt?: string;
       sortOrder?: number;
     };
@@ -318,6 +335,7 @@ adminRouter.post("/products/:id/images", requireAdmin, async (req: AuthedRequest
       data: {
         productId: req.params.id,
         url,
+        publicId: typeof publicId === "string" && publicId ? publicId : null,
         alt,
         sortOrder: sortOrder ?? 0,
       },
@@ -343,7 +361,7 @@ adminRouter.delete("/products/:productId/images/:imageId", requireAdmin, async (
       res.status(404).json({ error: "Not found" });
       return;
     }
-    await destroyCloudinaryByUrl(image.url);
+    await destroyCloudinaryAsset({ publicId: image.publicId, url: image.url });
     await prisma.productImage.delete({ where: { id: image.id } });
     await writeAuditLog({
       adminId: req.admin!.id,
@@ -546,7 +564,7 @@ adminRouter.delete("/banners/:id", requireAdmin, async (req: AuthedRequest, res,
       res.status(404).json({ error: "Not found" });
       return;
     }
-    await destroyCloudinaryByUrl(banner.imageUrl);
+    await destroyCloudinaryAsset({ url: banner.imageUrl });
     await prisma.banner.delete({ where: { id } });
     await writeAuditLog({
       adminId: req.admin!.id,
@@ -653,7 +671,7 @@ adminRouter.get("/audit", requireAdmin, async (_req, res, next) => {
 
 adminRouter.get("/uploads/sign", requireAdmin, async (req: AuthedRequest, res, next) => {
   try {
-    const folder = (req.query.folder as string) || "jewellery";
+    const folder = (req.query.folder as string) || undefined;
     const params = getSignedUploadParams(folder);
     await writeAuditLog({
       adminId: req.admin!.id,

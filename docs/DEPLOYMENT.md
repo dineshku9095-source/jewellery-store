@@ -83,17 +83,24 @@ Do **not** commit or push `.env` / `.env.local`.
 - Frontend proxies `/api` via Next rewrites → browser stays same-origin; `COOKIE_SAME_SITE=lax` + `COOKIE_SECURE=true` is correct on HTTPS.
 - If the browser calls the API host directly, set `CORS_ORIGINS` to the frontend origin, `credentials: true` (already), and `COOKIE_SAME_SITE=none` with Secure.
 
-### Images
+### Images (admin file upload)
 
-Never configure local disk uploads. Use admin signed Cloudinary flow (`/api/admin/uploads/sign`). Real `CLOUDINARY_*` keys are required for new uploads; seed/Unsplash URLs work without Cloudinary.
+Never configure local disk uploads. Admin product forms use a **file picker** that:
+
+1. Calls `GET /api/admin/uploads/sign`
+2. Uploads the file directly to Cloudinary
+3. Saves `secure_url` + `public_id` on `ProductImage`
+
+Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` (and optional `CLOUDINARY_FOLDER`) on the **API** Render service. Free Cloudinary tier is fine. Seed/Unsplash URLs still work without Cloudinary; file upload shows a clear error until keys exist. Confirm with `GET /health` → `cloudinary: ok`.
 
 ## Environment checklist
 
 | Variable | Service | Required |
 |----------|---------|----------|
-| `DATABASE_URL` | API | Yes (from Render Postgres) |
+| `DATABASE_URL` | API | Yes (Neon pooled `postgresql://`) |
 | `ADMIN_BOOTSTRAP_EMAIL/PASSWORD` | API | Yes (first boot / seed) |
-| `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` | API | Yes for uploads |
+| `CLOUDINARY_CLOUD_NAME/API_KEY/API_SECRET` | API | Yes for file uploads |
+| `CLOUDINARY_FOLDER` | API | Optional (default `jewellery-store`) |
 | `FRONTEND_URL` / `CORS_ORIGINS` | API | Yes |
 | `BACKEND_URL` | Web | Yes |
 | `NEXT_PUBLIC_SITE_URL` | Web | Recommended |
