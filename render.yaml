@@ -10,7 +10,7 @@ services:
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: npm install && npm run build -w @jewellery/shared && npm run db:generate && npm run build -w @jewellery/backend
+    buildCommand: npm install --include=dev && npm run build -w @jewellery/shared && npm run db:generate && npm run build -w @jewellery/backend
     startCommand: cd backend && npx prisma migrate deploy && node dist/index.js
     healthCheckPath: /health
     envVars:
@@ -48,7 +48,7 @@ services:
     runtime: node
     plan: free
     rootDir: .
-    buildCommand: npm install && npm run build -w @jewellery/shared && npm run build -w @jewellery/frontend
+    buildCommand: npm install --include=dev && npm run build -w @jewellery/shared && NODE_ENV=production npm run build -w @jewellery/frontend
     startCommand: npm run start -w @jewellery/frontend
     envVars:
       - key: NODE_ENV
