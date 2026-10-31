@@ -1,23 +1,29 @@
+# Free-tier Blueprint — Neon Postgres (external) + Render web services
+# Set DATABASE_URL to your Neon pooled connection string in the dashboard.
+# After first deploy, set FRONTEND_URL / CORS_ORIGINS / APP_URL / BACKEND_URL / NEXT_PUBLIC_SITE_URL
+# to the real https://*.onrender.com hosts, then Manual Deploy again.
+# Seed once (API Shell): cd backend && npx tsx prisma/seed.ts
+
 services:
   - type: web
     name: jewellery-api
     runtime: node
-    plan: starter
-    rootDir: backend
-    buildCommand: npm install && npm run build -w @jewellery/shared && npm run build
-    startCommand: npm run start
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build -w @jewellery/shared && npm run db:generate && npm run build -w @jewellery/backend
+    startCommand: cd backend && npx prisma migrate deploy && node dist/index.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
-        fromDatabase:
-          name: jewellery-db
-          property: connectionString
+        sync: false
       - key: ADMIN_BOOTSTRAP_EMAIL
         sync: false
       - key: ADMIN_BOOTSTRAP_PASSWORD
         sync: false
+      - key: ADMIN_BOOTSTRAP_NAME
+        value: Store Admin
       - key: APP_URL
         sync: false
       - key: FRONTEND_URL
@@ -34,14 +40,16 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      - key: CLOUDINARY_FOLDER
+        value: jewellery-store
 
   - type: web
     name: jewellery-web
     runtime: node
-    plan: starter
-    rootDir: frontend
-    buildCommand: npm install && npm run build -w @jewellery/shared && npm run build
-    startCommand: npm run start
+    plan: free
+    rootDir: .
+    buildCommand: npm install && npm run build -w @jewellery/shared && npm run build -w @jewellery/frontend
+    startCommand: npm run start -w @jewellery/frontend
     envVars:
       - key: NODE_ENV
         value: production
@@ -49,9 +57,3 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
-
-databases:
-  - name: jewellery-db
-    plan: starter
-    databaseName: jewellery
-    user: jewellery
