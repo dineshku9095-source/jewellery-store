@@ -2,33 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #faf7f2;
-  --foreground: #2c2c2c;
-}
-
 body {
-  @apply bg-ivory text-charcoal font-sans antialiased;
+  @apply bg-white text-ink font-sans antialiased;
 }
 
-h1,
-h2,
-h3 {
-  @apply font-display;
+.btn-outline-dark {
+  @apply inline-flex items-center justify-center border border-ink bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink transition hover:bg-ink hover:text-white;
+}
+
+.btn-solid-dark {
+  @apply inline-flex items-center justify-center border border-ink bg-ink px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white hover:text-ink;
+}
+
+.btn-outline-light {
+  @apply inline-flex items-center justify-center border border-white bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white hover:text-ink;
 }
 
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-sm bg-champagne px-6 py-3 text-sm font-medium uppercase tracking-widest text-ivory transition hover:bg-champagne-dark;
+  @apply inline-flex items-center justify-center border border-ink bg-ink px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:bg-white hover:text-ink;
 }
 
 .btn-outline {
-  @apply inline-flex items-center justify-center rounded-sm border border-charcoal/20 px-6 py-3 text-sm font-medium uppercase tracking-widest text-charcoal transition hover:border-champagne hover:text-champagne-dark;
+  @apply inline-flex items-center justify-center border border-ink bg-transparent px-8 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-ink transition hover:bg-ink hover:text-white;
 }
 
 .input-field {
-  @apply w-full rounded-sm border border-charcoal/15 bg-cream/50 px-4 py-3 text-charcoal outline-none focus:border-champagne;
+  @apply w-full border border-line bg-white px-4 py-3 text-ink outline-none focus:border-ink;
 }
 
 .prose-store {
-  @apply max-w-none text-charcoal-muted leading-relaxed;
+  @apply max-w-none text-muted leading-relaxed;
 }

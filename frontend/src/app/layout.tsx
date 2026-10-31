@@ -1,28 +1,35 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Outfit } from "next/font/google";
+import { Great_Vibes, Jost, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 
-const cormorant = Cormorant_Garamond({
+const script = Great_Vibes({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-cormorant",
+  weight: "400",
+  variable: "--font-script",
 });
 
-const outfit = Outfit({
+const display = Cormorant_Garamond({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-display",
+});
+
+const sans = Jost({
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
-  title: "Refine Gilt — Jewellery",
-  description: "Ivory, cream, and champagne gold jewellery with WhatsApp checkout.",
+  title: "Jewellery Store — Classic Jewellery Collection",
+  description: "Elegant jewellery for every story. Guest checkout via WhatsApp.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${cormorant.variable} ${outfit.variable}`}>
+    <html lang="en" className={`${script.variable} ${display.variable} ${sans.variable}`}>
       <body>
         <CartProvider>
           <SiteHeader />
