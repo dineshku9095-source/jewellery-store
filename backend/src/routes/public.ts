@@ -1,5 +1,10 @@
 import { Router } from "express";
-import { DEFAULT_HOMEPAGE_CONTENT, mergeHomepageContent } from "@jewellery/shared";
+import {
+  DEFAULT_HEADER_NAV,
+  DEFAULT_HOMEPAGE_CONTENT,
+  mergeHeaderNav,
+  mergeHomepageContent,
+} from "@jewellery/shared";
 import { processCheckout } from "../services/checkoutService";
 import { checkoutLimiter } from "../middleware/rateLimit";
 import { prisma } from "../lib/prisma";
@@ -159,6 +164,7 @@ publicRouter.get("/settings/public", async (_req, res, next) => {
           address: "",
           currency: "INR",
           homepage: DEFAULT_HOMEPAGE_CONTENT,
+          headerNav: DEFAULT_HEADER_NAV,
         },
       });
       return;
@@ -173,6 +179,7 @@ publicRouter.get("/settings/public", async (_req, res, next) => {
         address: settings.address,
         currency: settings.currency,
         homepage: mergeHomepageContent(settings.homepageContent),
+        headerNav: mergeHeaderNav(settings.headerNav),
       },
     });
   } catch (e) {

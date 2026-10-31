@@ -13,6 +13,7 @@
 | Product images | ✓ | ✓ file picker → Cloudinary | — | ✓ DB + Cloudinary destroy | — |
 | Banners | ✓ | ✓ | ✓ | ✓ | isActive toggle |
 | Homepage | ✓ | — | ✓ landing copy | — | — |
+| Header nav | ✓ | ✓ items/children | ✓ reorder/visibility | ✓ | — |
 | Orders | ✓ | — | status | — | status pipeline |
 | Settings | ✓ | — | ✓ | — | — |
 

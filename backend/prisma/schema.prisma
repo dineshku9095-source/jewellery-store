@@ -133,6 +133,8 @@ model StoreSettings {
   currency         String   @default("INR")
   /// Editable storefront landing copy (JSON). Merged with defaults in app code.
   homepageContent  Json?
+  /// Editable header navigation (JSON). Merged with defaults in app code.
+  headerNav        Json?
   updatedAt        DateTime @updatedAt
 }
 

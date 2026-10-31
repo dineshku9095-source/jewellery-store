@@ -4,14 +4,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import {
+  DEFAULT_HEADER_NAV,
+  DEFAULT_HOMEPAGE_CONTENT,
+  type HeaderNav,
+  type HeaderNavItem,
+  type HomepageContent,
+} from "@jewellery/shared";
 import { useCart } from "@/context/CartContext";
-import { DEFAULT_HOMEPAGE_CONTENT, type HomepageContent } from "@jewellery/shared";
 
 type ChromeCopy = {
   storeName: string;
   contactEmail: string;
   topBarPromo: string;
   footerBlurb: string;
+  headerNav: HeaderNav;
 };
 
 const DEFAULT_CHROME: ChromeCopy = {
@@ -19,6 +26,7 @@ const DEFAULT_CHROME: ChromeCopy = {
   contactEmail: DEFAULT_HOMEPAGE_CONTENT.topBarEmail || "hello@queensjewelsaura.example",
   topBarPromo: DEFAULT_HOMEPAGE_CONTENT.topBarPromo,
   footerBlurb: DEFAULT_HOMEPAGE_CONTENT.footerBlurb,
+  headerNav: DEFAULT_HEADER_NAV,
 };
 
 function useChromeCopy(): ChromeCopy {
@@ -28,19 +36,27 @@ function useChromeCopy(): ChromeCopy {
     let cancelled = false;
     fetch("/api/settings/public", { credentials: "include" })
       .then((r) => r.json())
-      .then((data: { settings?: { storeName?: string; contactEmail?: string | null; homepage?: HomepageContent } }) => {
-        if (cancelled || !data.settings) return;
-        const home = data.settings.homepage ?? DEFAULT_HOMEPAGE_CONTENT;
-        setCopy({
-          storeName: data.settings.storeName || DEFAULT_CHROME.storeName,
-          contactEmail:
-            home.topBarEmail ||
-            data.settings.contactEmail ||
-            DEFAULT_CHROME.contactEmail,
-          topBarPromo: home.topBarPromo || DEFAULT_CHROME.topBarPromo,
-          footerBlurb: home.footerBlurb || DEFAULT_CHROME.footerBlurb,
-        });
-      })
+      .then(
+        (data: {
+          settings?: {
+            storeName?: string;
+            contactEmail?: string | null;
+            homepage?: HomepageContent;
+            headerNav?: HeaderNav;
+          };
+        }) => {
+          if (cancelled || !data.settings) return;
+          const home = data.settings.homepage ?? DEFAULT_HOMEPAGE_CONTENT;
+          setCopy({
+            storeName: data.settings.storeName || DEFAULT_CHROME.storeName,
+            contactEmail:
+              home.topBarEmail || data.settings.contactEmail || DEFAULT_CHROME.contactEmail,
+            topBarPromo: home.topBarPromo || DEFAULT_CHROME.topBarPromo,
+            footerBlurb: home.footerBlurb || DEFAULT_CHROME.footerBlurb,
+            headerNav: data.settings.headerNav ?? DEFAULT_HEADER_NAV,
+          });
+        }
+      )
       .catch(() => {
         /* keep defaults */
       });
@@ -52,11 +68,55 @@ function useChromeCopy(): ChromeCopy {
   return copy;
 }
 
+function NavItem({ item }: { item: HeaderNavItem }) {
+  const children = item.children.filter((c) => c.visible);
+  const hasDropdown = children.length > 0;
+
+  if (!hasDropdown) {
+    return (
+      <Link href={item.href || "/shop"} className="hover:text-gold">
+        {item.label}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="group relative">
+      <Link
+        href={item.href || "/shop"}
+        className="inline-flex items-center gap-1 hover:text-gold"
+        aria-haspopup="true"
+      >
+        {item.label}
+        <span className="text-[9px] opacity-70" aria-hidden>
+          ▾
+        </span>
+      </Link>
+      <div className="invisible absolute left-0 top-full z-50 min-w-[180px] pt-2 opacity-0 transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+        <ul className="border border-line bg-cream py-2 shadow-sm">
+          {children.map((child) => (
+            <li key={child.id}>
+              <Link
+                href={child.href || "/shop"}
+                className="block px-4 py-2 text-[11px] font-medium uppercase tracking-[0.14em] text-forest hover:bg-blush hover:text-gold"
+              >
+                {child.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
 export function SiteHeader() {
   const { count } = useCart();
   const pathname = usePathname();
   const copy = useChromeCopy();
   if (pathname?.startsWith("/admin")) return null;
+
+  const navItems = copy.headerNav.items.filter((i) => i.visible);
 
   return (
     <header className="sticky top-0 z-50 bg-cream">
@@ -103,24 +163,18 @@ export function SiteHeader() {
           </Link>
 
           <nav className="hidden items-center gap-7 text-[12px] font-medium uppercase tracking-[0.16em] text-forest lg:flex">
-            <Link href="/shop" className="hover:text-gold">
-              Jewellery
-            </Link>
-            <Link href="/about" className="hover:text-gold">
-              Blogs
-            </Link>
-            <Link href="/shop" className="hover:text-gold">
-              Accessories
-            </Link>
-            <Link href="/collections" className="hover:text-gold">
-              Collection
-            </Link>
-            <Link href="/category" className="hover:text-gold">
-              Category
-            </Link>
-            <Link href="/contact" className="hover:text-gold">
-              Contact
-            </Link>
+            {navItems.map((item) => (
+              <NavItem key={item.id} item={item} />
+            ))}
+          </nav>
+
+          {/* Mobile: compact links */}
+          <nav className="flex max-w-[45%] flex-wrap justify-end gap-x-3 gap-y-1 text-[10px] font-medium uppercase tracking-[0.12em] text-forest lg:hidden">
+            {navItems.slice(0, 4).map((item) => (
+              <Link key={item.id} href={item.href || "/shop"} className="hover:text-gold">
+                {item.label}
+              </Link>
+            ))}
           </nav>
 
           <div className="flex items-center gap-4 text-forest">
@@ -210,26 +264,16 @@ export function SiteFooter() {
         <div className="text-sm text-cream/75">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-gold">Explore</p>
           <ul className="space-y-2">
-            <li>
-              <Link href="/shop" className="hover:text-gold-soft">
-                Shop
-              </Link>
-            </li>
-            <li>
-              <Link href="/collections" className="hover:text-gold-soft">
-                Collections
-              </Link>
-            </li>
-            <li>
-              <Link href="/faq" className="hover:text-gold-soft">
-                FAQ
-              </Link>
-            </li>
-            <li>
-              <Link href="/shipping" className="hover:text-gold-soft">
-                Shipping
-              </Link>
-            </li>
+            {copy.headerNav.items
+              .filter((i) => i.visible)
+              .slice(0, 5)
+              .map((item) => (
+                <li key={item.id}>
+                  <Link href={item.href || "/shop"} className="hover:text-gold-soft">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
           </ul>
         </div>
         <div className="text-sm text-cream/75">
