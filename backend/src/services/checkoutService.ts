@@ -105,12 +105,6 @@ export async function processCheckout(input: CheckoutInput) {
         subtotal,
         currency: settings.currency,
         whatsappUrl,
-        statusHistory: {
-          create: {
-            status: "WHATSAPP_PENDING",
-            note: "Order placed via storefront checkout",
-          },
-        },
         items: {
           create: lineItems.map((l) => ({
             productId: l.productId,

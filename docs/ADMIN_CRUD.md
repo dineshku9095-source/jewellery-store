@@ -15,6 +15,8 @@
 | Orders | ✓ | — | status | — | status pipeline |
 | Settings | ✓ | — | ✓ | — | — |
 
+Audit log UI/API removed for Neon free tier — see [NEON_FREE_TIER.md](./NEON_FREE_TIER.md).
+
 ## Product image uploads
 
 Admin product create/edit uses a **multi-file picker**. Flow:

@@ -21,7 +21,6 @@ import {
 } from "../lib/session";
 import { config } from "../config";
 import { prisma } from "../lib/prisma";
-import { writeAuditLog } from "../services/audit";
 import { destroyCloudinaryAsset, getSignedUploadParams } from "../services/cloudinary";
 import { serializeOrder, updateOrderStatus } from "../services/orderService";
 
@@ -58,7 +57,6 @@ adminRouter.post("/login", loginLimiter, async (req, res, next) => {
       maxAge: SESSION_DAYS * 24 * 60 * 60 * 1000,
       path: "/",
     });
-    await writeAuditLog({ adminId: admin.id, action: "admin.login" });
     res.json({ admin: { id: admin.id, email: admin.email, name: admin.name } });
   } catch (e) {
     next(e);
@@ -70,9 +68,6 @@ adminRouter.post("/logout", requireAdmin, async (req: AuthedRequest, res, next) 
     const token = req.cookies?.[sessionCookieName()];
     if (token) await revokeSession(token);
     res.clearCookie(sessionCookieName(), { path: "/" });
-    if (req.admin) {
-      await writeAuditLog({ adminId: req.admin.id, action: "admin.logout" });
-    }
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -94,7 +89,6 @@ adminRouter.post("/change-password", requireAdmin, async (req: AuthedRequest, re
     }
     const passwordHash = await argon2.hash(parsed.newPassword, { type: argon2.argon2id });
     await prisma.admin.update({ where: { id: admin.id }, data: { passwordHash } });
-    await writeAuditLog({ adminId: admin.id, action: "admin.change_password" });
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -209,12 +203,6 @@ adminRouter.post("/products", requireAdmin, async (req: AuthedRequest, res, next
       },
       include: { variants: true, images: true },
     });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "product.create",
-      entity: "Product",
-      entityId: product.id,
-    });
     res.status(201).json({ product });
   } catch (e) {
     next(e);
@@ -278,13 +266,6 @@ adminRouter.patch("/products/:id", requireAdmin, async (req: AuthedRequest, res,
 
       return updated;
     });
-
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "product.update",
-      entity: "Product",
-      entityId: product.id,
-    });
     res.json({ product });
   } catch (e) {
     next(e);
@@ -307,12 +288,6 @@ adminRouter.delete("/products/:id", requireAdmin, async (req: AuthedRequest, res
       await destroyCloudinaryAsset({ publicId: img.publicId, url: img.url });
     }
     await prisma.product.delete({ where: { id } });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "product.delete",
-      entity: "Product",
-      entityId: id,
-    });
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -340,12 +315,6 @@ adminRouter.post("/products/:id/images", requireAdmin, async (req: AuthedRequest
         sortOrder: sortOrder ?? 0,
       },
     });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "product.image_add",
-      entity: "Product",
-      entityId: req.params.id,
-    });
     res.status(201).json({ image });
   } catch (e) {
     next(e);
@@ -363,12 +332,6 @@ adminRouter.delete("/products/:productId/images/:imageId", requireAdmin, async (
     }
     await destroyCloudinaryAsset({ publicId: image.publicId, url: image.url });
     await prisma.productImage.delete({ where: { id: image.id } });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "product.image_delete",
-      entity: "ProductImage",
-      entityId: image.id,
-    });
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -391,12 +354,6 @@ adminRouter.post("/categories", requireAdmin, async (req: AuthedRequest, res, ne
   try {
     const parsed = categoryInputSchema.parse(req.body);
     const category = await prisma.category.create({ data: parsed });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "category.create",
-      entity: "Category",
-      entityId: category.id,
-    });
     res.status(201).json({ category });
   } catch (e) {
     next(e);
@@ -409,12 +366,6 @@ adminRouter.patch("/categories/:id", requireAdmin, async (req: AuthedRequest, re
     const category = await prisma.category.update({
       where: { id: req.params.id },
       data: parsed,
-    });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "category.update",
-      entity: "Category",
-      entityId: category.id,
     });
     res.json({ category });
   } catch (e) {
@@ -429,12 +380,6 @@ adminRouter.delete("/categories/:id", requireAdmin, async (req: AuthedRequest, r
       prisma.product.updateMany({ where: { categoryId: id }, data: { categoryId: null } }),
       prisma.category.delete({ where: { id } }),
     ]);
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "category.delete",
-      entity: "Category",
-      entityId: id,
-    });
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -457,12 +402,6 @@ adminRouter.post("/collections", requireAdmin, async (req: AuthedRequest, res, n
   try {
     const parsed = collectionInputSchema.parse(req.body);
     const collection = await prisma.collection.create({ data: parsed });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "collection.create",
-      entity: "Collection",
-      entityId: collection.id,
-    });
     res.status(201).json({ collection });
   } catch (e) {
     next(e);
@@ -476,12 +415,6 @@ adminRouter.patch("/collections/:id", requireAdmin, async (req: AuthedRequest, r
       where: { id: req.params.id },
       data: parsed,
     });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "collection.update",
-      entity: "Collection",
-      entityId: collection.id,
-    });
     res.json({ collection });
   } catch (e) {
     next(e);
@@ -492,12 +425,6 @@ adminRouter.delete("/collections/:id", requireAdmin, async (req: AuthedRequest, 
   try {
     const id = req.params.id;
     await prisma.collection.delete({ where: { id } });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "collection.delete",
-      entity: "Collection",
-      entityId: id,
-    });
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -522,12 +449,6 @@ adminRouter.post("/banners", requireAdmin, async (req: AuthedRequest, res, next)
         linkUrl: parsed.linkUrl || null,
       },
     });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "banner.create",
-      entity: "Banner",
-      entityId: banner.id,
-    });
     res.status(201).json({ banner });
   } catch (e) {
     next(e);
@@ -543,12 +464,6 @@ adminRouter.patch("/banners/:id", requireAdmin, async (req: AuthedRequest, res, 
         ...parsed,
         linkUrl: parsed.linkUrl === "" ? null : parsed.linkUrl,
       },
-    });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "banner.update",
-      entity: "Banner",
-      entityId: banner.id,
     });
     res.json({ banner });
   } catch (e) {
@@ -566,12 +481,6 @@ adminRouter.delete("/banners/:id", requireAdmin, async (req: AuthedRequest, res,
     }
     await destroyCloudinaryAsset({ url: banner.imageUrl });
     await prisma.banner.delete({ where: { id } });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "banner.delete",
-      entity: "Banner",
-      entityId: id,
-    });
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -594,12 +503,6 @@ adminRouter.put("/settings", requireAdmin, async (req: AuthedRequest, res, next)
       where: { id: 1 },
       update: parsed,
       create: { id: 1, ...parsed },
-    });
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "settings.update",
-      entity: "StoreSettings",
-      entityId: "1",
     });
     res.json({ settings });
   } catch (e) {
@@ -625,7 +528,7 @@ adminRouter.get("/orders/:id", requireAdmin, async (req, res, next) => {
   try {
     const order = await prisma.order.findUnique({
       where: { id: req.params.id },
-      include: { items: true, statusHistory: { orderBy: { createdAt: "desc" } } },
+      include: { items: true },
     });
     if (!order) {
       res.status(404).json({ error: "Not found" });
@@ -656,28 +559,10 @@ adminRouter.patch("/orders/:id/status", requireAdmin, async (req: AuthedRequest,
   }
 });
 
-adminRouter.get("/audit", requireAdmin, async (_req, res, next) => {
-  try {
-    const logs = await prisma.adminAuditLog.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 200,
-      include: { admin: { select: { email: true, name: true } } },
-    });
-    res.json({ logs });
-  } catch (e) {
-    next(e);
-  }
-});
-
 adminRouter.get("/uploads/sign", requireAdmin, async (req: AuthedRequest, res, next) => {
   try {
     const folder = (req.query.folder as string) || undefined;
     const params = getSignedUploadParams(folder);
-    await writeAuditLog({
-      adminId: req.admin!.id,
-      action: "upload.sign",
-      metadata: { folder },
-    });
     res.json(params);
   } catch (e) {
     if (e instanceof Error && e.message.includes("not configured")) {

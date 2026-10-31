@@ -1,12 +1,11 @@
 import { canTransition } from "@jewellery/shared";
 import type { OrderStatus } from "@jewellery/shared";
 import { prisma } from "../lib/prisma";
-import { writeAuditLog } from "./audit";
 
 export async function updateOrderStatus(
   orderId: string,
   to: OrderStatus,
-  adminId: string,
+  _adminId: string,
   note?: string
 ) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
@@ -16,23 +15,18 @@ export async function updateOrderStatus(
     throw new Error(`Cannot transition from ${order.status} to ${to}`);
   }
 
+  const notes =
+    note && note.trim()
+      ? [order.notes?.trim(), `[${to}] ${note.trim()}`].filter(Boolean).join("\n").slice(0, 500)
+      : undefined;
+
   const updated = await prisma.order.update({
     where: { id: orderId },
     data: {
       status: to,
-      statusHistory: {
-        create: { status: to, note },
-      },
+      ...(notes !== undefined ? { notes } : {}),
     },
-    include: { items: true, statusHistory: { orderBy: { createdAt: "desc" } } },
-  });
-
-  await writeAuditLog({
-    adminId,
-    action: "order.status_update",
-    entity: "Order",
-    entityId: orderId,
-    metadata: { from: order.status, to, note },
+    include: { items: true },
   });
 
   return updated;

@@ -32,5 +32,6 @@ Fetch `GET /api/admin/csrf` first; send `x-csrf-token` on mutating requests.
 - `GET|PUT /api/admin/settings`
 - `GET /api/admin/orders`, `GET /api/admin/orders/:id`
 - `PATCH /api/admin/orders/:id/status`
-- `GET /api/admin/audit`
 - `GET /api/admin/uploads/sign` — Cloudinary signed params
+
+Audit log API removed (Neon free-tier trim).

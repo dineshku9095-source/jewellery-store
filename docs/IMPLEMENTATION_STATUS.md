@@ -33,7 +33,8 @@ Home, shop, categories, collections, PDP, cart, checkout, order success, about, 
 
 ## Admin routes
 
-Login, dashboard, products, categories, collections, banners, orders (+ detail), settings, profile, audit.
+Login, dashboard, products, categories, collections, banners, orders (+ detail), settings, profile.
+(Audit log UI/API removed for Neon free tier.)
 
 ## Live GitHub (JE-2)
 

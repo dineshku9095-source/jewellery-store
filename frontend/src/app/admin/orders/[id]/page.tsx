@@ -39,7 +39,6 @@ type OrderDetail = {
     quantity: number;
     lineTotal: string;
   }>;
-  statusHistory?: Array<{ status: string; note?: string | null; createdAt: string }>;
 };
 
 export default function AdminOrderDetailPage({ params }: { params: { id: string } }) {
@@ -151,16 +150,10 @@ export default function AdminOrderDetailPage({ params }: { params: { id: string 
           <button type="button" className="btn-primary" onClick={updateStatus}>
             Save status
           </button>
-          {order.statusHistory?.length ? (
-            <ul className="mt-4 space-y-1 border-t border-line pt-3 text-xs text-muted">
-              {order.statusHistory.map((h, i) => (
-                <li key={i}>
-                  {h.status}
-                  {h.note ? ` — ${h.note}` : ""} · {new Date(h.createdAt).toLocaleString("en-IN")}
-                </li>
-              ))}
-            </ul>
-          ) : null}
+          <p className="mt-3 text-xs text-muted">
+            Status notes are appended to the order notes field (no separate history table — Neon free-tier
+            friendly).
+          </p>
         </AdminPanel>
       </div>
     </div>
