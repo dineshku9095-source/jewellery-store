@@ -1,81 +1,81 @@
-# API keep-alive (Render free)
+# API / web keep-alive (Render free) — every 1 minute
 
-**Health URL:** https://jewellery-api-l84i.onrender.com/health
+Render **free** dynos sleep after ~15 minutes idle. That causes storefront `/api/*` **502**s until wake (30–60s).
 
-Render free dynos sleep after ~15 minutes idle. Ping `/health` every **10 minutes** to keep the API warm.
+Ping **both** services every **1 minute**:
+
+| Job | URL |
+|-----|-----|
+| API | https://jewellery-api-l84i.onrender.com/health |
+| Web (keeps rewrite path warm) | https://jewellery-web-3raw.onrender.com/api/settings/public |
+
+Also fine as a third optional ping: `https://jewellery-web-3raw.onrender.com/`
 
 ---
 
-## Option A — cron-job.org (recommended external, free signup)
+## Option A — cron-job.org (recommended — free signup, exact 1‑minute)
 
-1. Sign up: https://cron-job.org/en/signup/
-2. **Cronjobs** → **Create cronjob**
-3. Title: `jewellery-api keep-alive`
-4. URL: `https://jewellery-api-l84i.onrender.com/health`
-5. Schedule: every **10 minutes**
-6. Enable and save
+### Exact clicks
 
-No repo changes required. Confirm the job shows green after the first run.
+1. Open **https://cron-job.org/en/signup/** → create a free account → verify email → log in.
+2. Left menu → **Cronjobs** → button **+ Create cronjob** (or **Create first cronjob**).
+3. **Job 1 — API**
+   - **Title:** `jewellery-api health 1m`
+   - **URL:** `https://jewellery-api-l84i.onrender.com/health`
+   - **Schedule:** choose **Every minute** (or custom cron `* * * * *`)
+   - **Request method:** GET  
+   - Leave auth empty  
+   - **Enable job** / **Active** = on  
+   - **Create** / **Save**
+4. **+ Create cronjob** again for **Job 2 — Web**
+   - **Title:** `jewellery-web settings 1m`
+   - **URL:** `https://jewellery-web-3raw.onrender.com/api/settings/public`
+   - **Schedule:** **Every minute** (`* * * * *`)
+   - GET → Save / enable
+5. (Optional) Job 3 — Title `jewellery-web home 1m` → URL `https://jewellery-web-3raw.onrender.com/` → every minute.
+6. Open each job → **History** / **Execution log** — confirm **HTTP 200** within a couple of minutes.
 
-## Option B — UptimeRobot (free signup)
+No repo changes required for this option. The Cloud Agent VM **cannot** host lasting cron.
 
-1. Sign up: https://uptimerobot.com/signUp
-2. **Add New Monitor** → type **HTTPS**
-3. URL: `https://jewellery-api-l84i.onrender.com/health`
-4. Interval: **5 minutes** (free plan minimum)
-5. Create monitor
+---
 
-## Option C — GitHub Actions (in-repo; needs `workflow` scope to push)
+## Option B — UptimeRobot (free signup; min interval 5 min)
 
-Create `.github/workflows/keep-alive.yml` on `main` (paste below), or merge a PR that adds it.  
-The Cloud Agent OAuth token **cannot** push workflow files (missing `workflow` scope) — a human with full `repo`+`workflow` PAT or the GitHub web UI must add this file once.
+Free plan cannot do 1 minute (minimum **5 minutes**). Use only if cron-job.org is unavailable:
 
-```yaml
-name: API keep-alive
+1. https://uptimerobot.com/signUp  
+2. **Add New Monitor** → **HTTPS** → API health URL → 5 min  
+3. Second monitor → web settings URL → 5 min  
 
-on:
-  schedule:
-    - cron: "*/10 * * * *"
-  workflow_dispatch:
+Prefer cron-job.org for true 1‑minute pings.
 
-jobs:
-  ping-health:
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    steps:
-      - name: Curl jewellery-api /health
-        run: |
-          set -euo pipefail
-          URL="https://jewellery-api-l84i.onrender.com/health"
-          echo "Pinging $URL"
-          for i in 1 2 3 4 5; do
-            code=$(curl -sS -o /tmp/health.json -w "%{http_code}" --max-time 60 "$URL" || echo "000")
-            echo "attempt=$i http=$code"
-            cat /tmp/health.json 2>/dev/null || true
-            echo
-            if [ "$code" = "200" ]; then exit 0; fi
-            sleep $((i * 5))
-          done
-          exit 1
-```
+---
 
-After merge: **Actions** → **API keep-alive** → **Run workflow** once.  
-Schedule URL: https://github.com/dineshku9095-source/jewellery-store/actions
+## Option C — GitHub Actions (cannot do reliable 1‑minute)
 
-> GitHub cron can drift on quiet repos; pair with Option A or B if you need stricter intervals.
+GitHub scheduled workflows minimum practical interval is ~5–10 minutes and drifts. Not enough to stop Render free sleep. Prefer Option A. YAML for optional ~10‑min backup is in git history / ask if needed.
 
-## Option D — local / VPS cron
+---
+
+## Option D — local / VPS cron (1 minute)
 
 ```bash
 chmod +x scripts/keep-alive.sh
-*/10 * * * * /path/to/jewellery-store/scripts/keep-alive.sh >> /tmp/qj-keepalive.log 2>&1
+* * * * * /path/to/jewellery-store/scripts/keep-alive.sh >> /tmp/qj-keepalive.log 2>&1
 ```
 
-Ephemeral Cloud Agent VMs are **not** suitable for this (they shut down).
+Ephemeral Cloud Agent VMs are **not** suitable.
+
+---
 
 ## Quick check
 
 ```bash
+./scripts/keep-alive.sh
+# or:
 curl -sS https://jewellery-api-l84i.onrender.com/health
-# expect: {"status":"ok","db":"ok",...}
+curl -sS -o /dev/null -w "%{http_code}\n" https://jewellery-web-3raw.onrender.com/api/settings/public
+curl -sS -o /dev/null -w "%{http_code}\n" https://jewellery-web-3raw.onrender.com/shop
 ```
+
+Expect health JSON with `"status":"ok","db":"ok"` and HTTP 200 on web URLs.

@@ -1,6 +1,6 @@
 # Deployment guide
 
-Last updated: 2026-10-31
+Last updated: 2026-11-02
 
 ## Live URLs
 
@@ -12,20 +12,22 @@ Last updated: 2026-10-31
 | API health | https://jewellery-api-l84i.onrender.com/health |
 | Admin login | https://jewellery-web-3raw.onrender.com/admin/login |
 
-## Keep-alive (prevent Render free cold starts)
+## Keep-alive (prevent Render free cold starts) — every 1 minute
 
-Render **free** services sleep after ~15 minutes idle → storefront `/api/*` rewrites **502** until the API wakes.
+Render **free** services sleep after ~15 minutes idle → storefront `/api/*` rewrites **502** until wake.
 
-**Full guide:** [`docs/KEEP_ALIVE.md`](./KEEP_ALIVE.md)
+**Full click-by-click guide:** [`docs/KEEP_ALIVE.md`](./KEEP_ALIVE.md)
 
-| Method | Signup? | Status |
-|--------|---------|--------|
-| [cron-job.org](https://cron-job.org) every 10 min on `/health` | Free account | **Recommended** — confirm after signup |
-| [UptimeRobot](https://uptimerobot.com) HTTPS monitor (5 min) | Free account | Alternative |
-| GitHub Actions schedule | No (uses repo) | YAML in `KEEP_ALIVE.md` — add via GitHub UI (agent token lacks `workflow` scope) |
-| `scripts/keep-alive.sh` | Local/VPS cron | Not for ephemeral Cloud Agent VMs |
+| Method | Interval | Notes |
+|--------|----------|--------|
+| [cron-job.org](https://cron-job.org/en/signup/) **two jobs** | **1 minute** | **Do this** — API `/health` + web `/api/settings/public` |
+| [UptimeRobot](https://uptimerobot.com) | 5 min min | Free plan cannot do 1 min |
+| `scripts/keep-alive.sh` | `* * * * *` on a VPS | Not on Cloud Agent VMs |
 
-**Health URL to paste:** `https://jewellery-api-l84i.onrender.com/health`
+**URLs to paste into cron-job.org:**
+
+1. `https://jewellery-api-l84i.onrender.com/health`
+2. `https://jewellery-web-3raw.onrender.com/api/settings/public`
 
 ## Prerequisites
 
